@@ -7,4 +7,8 @@ public class WavLoader {
 
         return 2;
     }
+    public void test(){
+
+    }
 }
+

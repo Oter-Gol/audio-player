@@ -1,7 +1,10 @@
 *.class
 
 *.iml
-*.autoSaveProject
+
+
+.idea/
+.vpprefdata/
 
 
 # Mobile Tools for Java (J2ME)

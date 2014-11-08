@@ -9,14 +9,24 @@ public class WavLoader {
 
     private RandomAccessFile wavFile; //audio file pointer
 
+    /*
+     * constants
+     */
     private final static String RIFF = new String( "RIFF" ); //constant RIFF, check if WAVE format
     private final static String WAVE = new String( "WAVE" ); //constant WAVE, check if WAVE format
-    private final static String fmt  = new String( "fmt "); //constant fmt , check if WAVE format
-
+    private final static String FMT  = new String( "fmt " ); //constant fmt , check if WAVE format
+    private final static String DATA = new String( "data" ); //constant data
+    private final static String FACT = new String( "fact" ); //constant fact, Non-PCM
+    /*
+     * common variables
+     */
     private char [] ckIDFile = new char [ 4 ]; // Chunk ID: "RIFF" , 4 bytes
     private int cksizeFile; // Chunk size = size of file in bytes - sizeOf(RIFF and cksizeFile), 4 bytes
     private char [] WAVEID = new char [ 4 ]; // WAVE ID: "WAVE", 4 bytes
 
+    /*
+     * fmt variables
+     */
     private char []  ckIDfmt = new char [ 4 ]; // Chunk ID: "fmt ", 4 bytes
     private int cksizefmt; //Chunk size: 16 or 18 or 40, 4 bytes
     private int wFormatTag; //Format code, need in enum 2 bytes
@@ -25,13 +35,34 @@ public class WavLoader {
     private int nAvjBytesPerSec; // Data rate, 4 bytes
     private int nBlockAlign; // Data block size (bytes), 2 bytes
     private int wBitsPerSample; // Bits per sample, 2 bytes
-    private int cbSize; // Size of the extension (0 or 22), 2 bytes
     private int wValidBitsPerSample; // Number of valid bits, 2 bytes
     private int dwChannelMask; // speaker position mask, 4 bytes
     private char [] SubFormat = new char [ 16 ]; //GUID, including the data format code, 16 bytes
 
-    // the standard format codes for waveform data
-    //depends on wFormatTag
+    /*
+     * common data variables
+     */
+    private char [] ckIDData = new char [ 4 ]; //stores the word "data"
+    private int cksizeData; // chunk size PCM
+
+    /*
+     * Non-PCM variables
+     */
+    private int cbSizeData; // size of the extension Non-PCM
+    private char [] ckIDNonPCM = new char [ 4 ]; //Chunk ID: "fact"
+    private int cksizeNonPCM; // Chunk size: 4
+    private int dwSampleLength; // Nc*Ns
+    /*
+     * data offset for all formats
+     */
+    private int PCM_Offset = 44;
+    private int Non_PCM_Offset;
+    private int EXTENSIBLE_Offset;
+
+    /*
+     * the standard format codes for waveform data
+     * depends on wFormatTag
+     */
     private enum Format_Code {
         WAVE_FORMAT_PCM( 0x0001 ), //PCM
         WAVE_FORMAT_IEEE_FLOAT( 0x0003 ), //IEEE float
@@ -61,6 +92,12 @@ public class WavLoader {
 
     private Format_Code wFormatTag_enum;
     private double wavDurationInSeconds; // the duration of current wav file
+
+
+    //
+    // methods
+    //
+    //
 
     /**
      * constructor for wave loader
@@ -99,8 +136,10 @@ public class WavLoader {
             ckIDFile[ i ] = ( char ) buffForFour[ i ];
         }
 
-        /* reads 4..7 bytes in wavFile and gets cksizeFile
-           the number of bytes in file except RIFF and sizeOf(cksizeFile) */
+        /*
+         * reads 4..7 bytes in wavFile and gets cksizeFile
+         * the number of bytes in file except RIFF and sizeOf(cksizeFile)
+         */
         cksizeFile = littleEndianByteArrayToInt( readBytes( 4 ) );
 
         /* reads 8..11 bytes for word WAVE */
@@ -109,6 +148,7 @@ public class WavLoader {
             WAVEID[ i ] = ( char ) buffForFour[ i ];
         }
 
+        System.out.println(new String( ckIDFile));
         /* checks if wavFile has WAVE format */
         if ( ( RIFF.equals( new String( ckIDFile ) ) ) &&
             ( WAVE.equals( new String( WAVEID ) ) ) ){
@@ -128,7 +168,7 @@ public class WavLoader {
      * @return 0 if everything ok, else -1
      */
     public int readFormatChunk() {
-        byte [] buffForFour;
+        byte [] buffForFour; // array of bytes size 4
 
         /* set pointer to the 12th position */
         try {
@@ -150,28 +190,107 @@ public class WavLoader {
         /*reads 20, 21 bytes. Format code */
         wFormatTag = littleEndianByteArrayToInt( readBytes( 2 ) );
 
-        /* reads 22,23 bytes. Number of interleaved channels */
+        /* depends on wFormatTag choose Format Code */
+        wFormatTag_enum = Format_Code.fromInt( wFormatTag );
+
+        /*
+         * reads 22,23 bytes. Number of interleaved channels
+         * Nc
+         */
         nChannels = littleEndianByteArrayToInt( readBytes( 2 ) );
 
-        /* reads 24..27 bytes. Sampling rate (blocks per second) */
+        /*
+         * reads 24..27 bytes. Sampling rate (blocks per second)
+         * F
+         */
         nSamplePerSec = littleEndianByteArrayToInt( readBytes( 4 ) );
 
-        /* reads 28..31 bytes. Data rate */
+        /*
+         * reads 28..31 bytes. Data rate
+         * F * M * Nc
+         */
         nAvjBytesPerSec = littleEndianByteArrayToInt( readBytes( 4 ) );
 
-        /* reads 32,33 bytes. Data block size (bytes) */
+        /*
+         * reads 32,33 bytes. Data block size (bytes)
+         * M * Nc
+         */
         nBlockAlign = littleEndianByteArrayToInt( readBytes( 2 ) );
 
-        /* reads 34,35 bytes. Bits per sample */
+        /*
+         * reads 34,35 bytes. Bits per sample
+         * rounds up to 8 * M
+         */
         wBitsPerSample = littleEndianByteArrayToInt( readBytes( 2 ) );
 
-        /* depends in wFormatTag choose Format Code */
-        wFormatTag_enum = Format_Code.fromInt( wFormatTag );
+        switch (wFormatTag_enum) {
+            case WAVE_FORMAT_PCM:
+                readPCMHeader();
+                break;
+            case WAVE_FORMAT_IEEE_FLOAT:
+                break;
+            case WAVE_FORMAT_ALAW:
+                break;
+            case WAVE_FORMAT_MULAW:
+                break;
+            case WAVE_FORMAT_EXTENSIBLE:
+                break;
+        }
+
+
+
+//        /* depends on wFormatTag choose Format Code */
+//        wFormatTag_enum = Format_Code.fromInt( wFormatTag );
 
         //TO-DO checking
         return 0;
     }
 
+    /**
+     * reads data if PCM
+     * @return 0 if everything is ok
+     */
+    public int readPCMHeader(){
+        byte [] buffForFour; // array of bytes size 4
+
+        /*
+         * reads 36..39 bytes. ckIDData must be "data"
+         */
+        buffForFour = readBytes( 4 );
+        /* gets chars from buff for ['d', 'a', 't', 'a'] */
+        for ( int i = 0; i < 4; i++ ){
+            ckIDData[ i ] = ( char ) buffForFour[ i ];
+        }
+
+        /*
+         * reads 40..43 bytes. Chunk size: M * Nc * Ns
+         */
+        cksizeData = littleEndianByteArrayToInt( readBytes( 4 ) );
+
+        return 0;
+    }
+
+    public int readNonPCMHeader() {
+        byte [] buffForFour; // array of bytes size 4
+        /*
+         * reads 36,37 bytes for size of the extension
+         */
+        cbSizeData = littleEndianByteArrayToInt( readBytes( 2 ) );
+
+        /*
+         * Chunk ID: "fact"
+         */
+        buffForFour = readBytes( 4 );
+        for ( int i = 0; i < 4; i++ ){
+            ckIDNonPCM[ i ] = ( char ) buffForFour[ i ];
+        }
+
+        //TO-DO
+
+        return 0;
+
+
+    }
     /**
      * reads certain number of bytes in wavFile
      * @param nBytes to read
@@ -179,6 +298,7 @@ public class WavLoader {
      */
     public byte [] readBytes( int nBytes ){
         byte [] buff = new byte[ nBytes ];
+
         try{
             wavFile.readFully( buff, 0, nBytes );
         } catch ( IOException e ){
@@ -188,13 +308,15 @@ public class WavLoader {
     }
 
     /**
-     * makes int value of array of 4 bytes
+     * makes int value from array of bytes
+     * the value of int depends on the length of array.
      * @param b
      * @return int value
      */
     public static int littleEndianByteArrayToInt(byte[] b)
     {
         int value = 0;
+
         for ( int i = 0; i < b.length; i++ ){
             value |= ( b[ i ] & 0xFF ) << ( i * 8 );
         }
@@ -202,3 +324,4 @@ public class WavLoader {
     }
 }
 
+//TO-DO Non-PCM function include IEEE_Float, ALAW, MULAW

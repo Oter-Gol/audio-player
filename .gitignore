@@ -20,3 +20,5 @@ hs_err_pid*
 audio-player.iml
 .vpprefdata
 .idea
+Core/Core.iml
+WavLoader/WavLoader.iml

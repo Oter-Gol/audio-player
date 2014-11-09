@@ -56,9 +56,11 @@ public class WavLoader {
     /*
      * data offset for all formats
      */
-    private int PCM_Offset = 44;
-    private int Non_PCM_Offset;
-    private int EXTENSIBLE_Offset;
+    private static final int PCM_Offset = 44;
+    private static final int Non_PCM_Offset = 0; // To-Do
+    private static final int EXTENSIBLE_Offset = 0; // To-Do
+
+
 
     /*
      * the standard format codes for waveform data
@@ -314,6 +316,58 @@ public class WavLoader {
 
 
     }
+
+    /*
+    * current offset in file
+    */
+    private int currentFileOffset;
+
+    /**
+     * sets current offset in file relative to the zero
+     * byte in data section
+     * @return current offset in samples in file
+     */
+    public void setCurrentOffset( int offset) {
+
+        switch ( wFormatTag_enum ) {
+            case WAVE_FORMAT_PCM:
+                currentFileOffset = PCM_Offset + offset;
+                break;
+            case WAVE_FORMAT_EXTENSIBLE:
+                currentFileOffset = EXTENSIBLE_Offset + offset;
+                break;
+            default:
+                currentFileOffset = Non_PCM_Offset + offset;
+                break;
+        }
+        // To-Do!
+        if ( cksizeData < currentFileOffset ) {
+            currentFileOffset = 0;
+        }
+    }
+
+    /**
+     * gets current offset in file relative to the zero
+     * byte in data section
+     * @return current offset in samples in file
+     */
+    public int getCurrentOffset() {
+        int retValue = 0;
+
+        switch ( wFormatTag_enum ) {
+            case WAVE_FORMAT_PCM:
+                retValue = currentFileOffset - PCM_Offset;
+                break;
+            case WAVE_FORMAT_EXTENSIBLE:
+                retValue = currentFileOffset - EXTENSIBLE_Offset;
+                break;
+            default:
+                retValue = currentFileOffset - Non_PCM_Offset;
+                break;
+        }
+        return retValue;
+    }
+
     /**
      * reads certain number of bytes in wavFile
      * @param nBytes to read

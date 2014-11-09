@@ -52,6 +52,7 @@ public class WavLoader {
     private char [] ckIDNonPCM = new char [ 4 ]; //Chunk ID: "fact"
     private int cksizeNonPCM; // Chunk size: 4
     private int dwSampleLength; // Nc*Ns
+
     /*
      * data offset for all formats
      */
@@ -72,7 +73,9 @@ public class WavLoader {
 
         private int value;
 
-        /* returns actual format from int value */
+        /*
+         * returns actual format from int value
+         */
         public static Format_Code fromInt( int val ){
             switch ( val ) {
                 case 0x0001 : return WAVE_FORMAT_PCM;
@@ -84,7 +87,9 @@ public class WavLoader {
             return null;
         }
 
-        /* constructor */
+        /*
+         * constructor
+         */
         Format_Code( int value ){
             this.value = value;
         }
@@ -94,10 +99,9 @@ public class WavLoader {
     private double wavDurationInSeconds; // the duration of current wav file
 
 
-    //
-    // methods
-    //
-    //
+    /*
+     * methods
+     */
 
     /**
      * constructor for wave loader
@@ -122,16 +126,22 @@ public class WavLoader {
     public int readWaveFileFormat(){
         byte [] buffForFour = new byte [ 4 ]; // is necessary for reading files
 
-        /* set pointer to the beginning of wavFile */
+        /*
+         * set pointer to the beginning of wavFile
+         */
         try {
             wavFile.seek( 0 );
         } catch (IOException e ) {
             //TO-DO
         }
 
-        /* saves first 0..3 elements for RIFF */
+        /*
+         * saves first 0..3 bytes for RIFF
+         */
         buffForFour = readBytes( 4 );
-        /* gets chars from buff for ['R', 'I', 'F', 'F'] */
+        /*
+         * gets chars from buff for ['R', 'I', 'F', 'F']
+         */
         for ( int i = 0; i < 4; i++ ){
             ckIDFile[ i ] = ( char ) buffForFour[ i ];
         }
@@ -142,14 +152,17 @@ public class WavLoader {
          */
         cksizeFile = littleEndianByteArrayToInt( readBytes( 4 ) );
 
-        /* reads 8..11 bytes for word WAVE */
+        /*
+         * reads 8..11 bytes for word WAVE
+         */
         buffForFour = readBytes( 4 );
         for ( int i = 0; i < 4; i++ ){
             WAVEID[ i ] = ( char ) buffForFour[ i ];
         }
 
-        System.out.println(new String( ckIDFile));
-        /* checks if wavFile has WAVE format */
+        /*
+         * checks if wavFile has WAVE format
+         */
         if ( ( RIFF.equals( new String( ckIDFile ) ) ) &&
             ( WAVE.equals( new String( WAVEID ) ) ) ){
             return 0;
@@ -170,27 +183,39 @@ public class WavLoader {
     public int readFormatChunk() {
         byte [] buffForFour; // array of bytes size 4
 
-        /* set pointer to the 12th position */
+        /*
+         * set pointer to the 12th position
+         */
         try {
             wavFile.seek( 12 );
         } catch (IOException e ) {
             //TO-DO
         }
 
-        /* saves first 12..15 elements for fmt */
+        /*
+         * saves first 12..15 elements for fmt
+         */
         buffForFour = readBytes( 4 );
-        /* gets chars from buff for ['f', 'm', 't', ''] */
+        /*
+         * gets chars from buff for ['f', 'm', 't', '']
+         */
         for ( int i = 0; i < 4; i++ ){
             ckIDfmt[ i ] = ( char ) buffForFour[ i ];
         }
 
-        /* reads 16..19 bytes in wavFile and gets cksizefmt */
+        /*
+         * reads 16..19 bytes in wavFile and gets cksizefmt
+         */
         cksizefmt = littleEndianByteArrayToInt( readBytes( 4 ) );
 
-        /*reads 20, 21 bytes. Format code */
+        /*
+         * reads 20, 21 bytes. Format code
+         */
         wFormatTag = littleEndianByteArrayToInt( readBytes( 2 ) );
 
-        /* depends on wFormatTag choose Format Code */
+        /*
+         * choose Format Code according to wFormatTag
+         */
         wFormatTag_enum = Format_Code.fromInt( wFormatTag );
 
         /*
@@ -237,11 +262,6 @@ public class WavLoader {
                 break;
         }
 
-
-
-//        /* depends on wFormatTag choose Format Code */
-//        wFormatTag_enum = Format_Code.fromInt( wFormatTag );
-
         //TO-DO checking
         return 0;
     }
@@ -257,7 +277,9 @@ public class WavLoader {
          * reads 36..39 bytes. ckIDData must be "data"
          */
         buffForFour = readBytes( 4 );
-        /* gets chars from buff for ['d', 'a', 't', 'a'] */
+        /*
+         * gets chars from buff for ['d', 'a', 't', 'a']
+         */
         for ( int i = 0; i < 4; i++ ){
             ckIDData[ i ] = ( char ) buffForFour[ i ];
         }
@@ -272,6 +294,7 @@ public class WavLoader {
 
     public int readNonPCMHeader() {
         byte [] buffForFour; // array of bytes size 4
+
         /*
          * reads 36,37 bytes for size of the extension
          */

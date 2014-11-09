@@ -124,7 +124,7 @@ public class WavLoader {
      * @return 0 if everything is ok, -1 if file isn't WAVE
      */
     public int readWaveFileFormat(){
-        byte [] buffForFour = new byte [ 4 ]; // is necessary for reading files
+        byte [] buffForFour; // is necessary for reading files
 
         /*
          * set pointer to the beginning of wavFile

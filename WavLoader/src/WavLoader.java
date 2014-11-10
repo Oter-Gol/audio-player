@@ -313,8 +313,6 @@ public class WavLoader {
         //TO-DO
 
         return 0;
-
-
     }
 
     /*
@@ -369,15 +367,26 @@ public class WavLoader {
     }
 
     /**
+     *
+     * @return number of bytes in data chunk
+     */
+    public int getDataLength() {
+        return cksizeData;
+    }
+
+    /**
      * reads certain number of bytes in wavFile
      * @param nBytes to read
      * @return array of bytes read from the file
      */
     public byte [] readBytes( int nBytes ){
-        byte [] buff = new byte[ nBytes ];
+
+        int bytesToRead = cksizeData - getCurrentOffset() < nBytes ? cksizeData % nBytes : nBytes;
+
+        byte [] buff = new byte[ bytesToRead ];
 
         try{
-            wavFile.readFully( buff, 0, nBytes );
+            wavFile.readFully( buff, 0, bytesToRead );
         } catch ( IOException e ){
             //TO-DO
         }

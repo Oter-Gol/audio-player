@@ -1,0 +1,12 @@
+<?xml version = "1.0" encoding= "UTF-8"?>
+<AveliableFormats>
+    <Format>
+        <name>WAVE</name>
+        <extension>wav</extension>
+        <extension>wave</extension>
+    </Format>
+    <Format>
+        <name>MP3</name>
+        <extension>mp3</extension>
+    </Format>
+</AveliableFormats>

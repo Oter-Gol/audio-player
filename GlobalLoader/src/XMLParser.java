@@ -7,14 +7,14 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.w3c.dom.Element;
+
 /**
  * Created by Oleh on 11.11.2014.
  */
-public class ParserXML {
-    private ArrayList<ParserXML> myFormats = new ArrayList<ParserXML>();
+public class XMLParser {
+    private ArrayList<XMLParser> myFormats = new ArrayList<XMLParser>();
     private String name;
     private String [] extension;
 
@@ -23,14 +23,14 @@ public class ParserXML {
     /**
      * empty constructor
      */
-    public ParserXML(){}
+    public XMLParser(){}
 
     /**
      * constructor which set name and extensions
-     * @param name
-     * @param extension
+     * @param name name of format
+     * @param extension array of extensions of format
      */
-    public ParserXML( String name, String [] extension ){
+    public XMLParser(String name, String[] extension){
         this.name = name;
         this.extension = extension;
     }
@@ -75,7 +75,7 @@ public class ParserXML {
                 Element el = ( Element ) nl.item( i );
 
                 //get the Format object
-                ParserXML f = getFormat( el );
+                XMLParser f = getFormat( el );
 
                 //add it to list
                 myFormats.add( f );
@@ -84,28 +84,34 @@ public class ParserXML {
     }
 
     /**
-     *
-     * @param formEl
-     * @return
+     * reading data from each format
+     * @param formEl get info about current element
+     * @return an object of XMLParser
      */
-    private ParserXML getFormat( Element formEl ){
-
+    private XMLParser getFormat( Element formEl ){
         //for each <Format> element get text value of name and extension
         String name = getTextValue( formEl, "name")[0];
+
         String [] extension;
         extension = getTextValue(formEl, "extension");
-        //ParserXML f = new
-        ParserXML f = new ParserXML(name, extension);
 
-        return f;
+        return new XMLParser(name, extension);
     }
 
+    /**
+     * takes an xml element and the tag name, looks for the tag and gets
+     * the text content
+     * if there are more than two extensions, save in array
+     * @param ele current element to read
+     * @param tagName takes text value from this tag
+     * @return array of string taken from the tagName
+     */
     private String[] getTextValue( Element ele, String tagName ){
-
         NodeList nl = ele.getElementsByTagName( tagName );
         String [] textVal = new String[ nl.getLength() ];
+
         for ( int i = 0; i < nl.getLength(); i++){
-            if ( nl != null && nl.getLength() > 0 ) {
+            if ( nl.getLength() > 0 ) {
                 Element el = ( Element ) nl.item( i );
                 textVal[ i ] = el.getFirstChild().getNodeValue();
             }
@@ -114,20 +120,24 @@ public class ParserXML {
         return textVal;
     }
 
+    /**
+     * iterates through the list and prints info
+     */
     public void printData(){
-        //System.out.println("No of Employees '" + myFormats.size() + "'.");
-
-        Iterator it = myFormats.iterator();
-        while(it.hasNext()) {
-            System.out.println(it.next().toString());
+        for (XMLParser p : myFormats ) {
+            System.out.println(p.toString());
         }
     }
 
+    /**
+     * overrides method toString to print data about each format
+     * @return string info about each format
+     */
     @Override
     public String toString(){
         StringBuilder s = new StringBuilder();
 
-        s.append("name is " + name + " extensions: " );
+        s.append("format: " + name + ", extensions: " );
         for (int i = 0; i < extension.length; i++){
             s.append( extension[i] + " " );
         }

@@ -1,3 +1,4 @@
+import javax.sound.sampled.AudioFormat;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -5,7 +6,7 @@ import java.io.RandomAccessFile;
 /**
  * Created by OTER on 11/7/2014.
  */
-public class WavLoader {
+public class WavLoader implements Loadable {
 
     private RandomAccessFile wavFile; //audio file pointer
 
@@ -66,6 +67,8 @@ public class WavLoader {
     private static final int PCM_Offset = 44;
     private static final int Non_PCM_Offset = 0; // To-Do
     private static final int EXTENSIBLE_Offset = 0; // To-Do
+
+    private AudioFormat.Encoding encoding;
 
 
     /*
@@ -379,8 +382,8 @@ public class WavLoader {
     /**
      * sets current offset in file relative to the zero
      * byte in data section
-     * @return current offset in samples in file
      */
+    @Override
     public void setCurrentOffset( int offset) {
 
         switch ( wFormatTag_enum ) {
@@ -405,6 +408,7 @@ public class WavLoader {
      * byte in data section
      * @return current offset in samples in file
      */
+    @Override
     public int getCurrentOffset() {
         int retValue = 0;
 
@@ -426,6 +430,7 @@ public class WavLoader {
      *
      * @return number of bytes in data chunk
      */
+    @Override
     public int getDataLength() {
         return cksizeData;
     }
@@ -434,6 +439,7 @@ public class WavLoader {
      * getter for valid
      * @return true, if file is valid
      */
+    @Override
     public boolean isValid() {
         return valid;
     }
@@ -443,18 +449,77 @@ public class WavLoader {
      * @param nBytes to read
      * @return array of bytes read from the file
      */
+    @Override
     public byte [] readBytes( int nBytes ){
 
         int bytesToRead = cksizeData - getCurrentOffset() < nBytes ? cksizeData % nBytes : nBytes;
 
         byte [] buff = new byte[ bytesToRead ];
 
-        try{
+        try {
             wavFile.readFully( buff, 0, bytesToRead );
         } catch ( IOException e ){
             //TO-DO
         }
+
+
+
         return buff;
+    }
+
+    /**
+     * @return format encoding in byte array data of audio file
+     */
+    @Override
+    public AudioFormat.Encoding getEncoding() { // To-DO
+        return AudioFormat.Encoding.PCM_SIGNED;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public float getSampleRate() {
+        return (float)nSamplePerSec;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public int getSampleSizeInBits() {
+        return wBitsPerSample;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public int getChannels() {
+        return nChannels;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public int getFrameSize() {
+        return 0;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public float getFrameRate() {
+        return 0;
+    }
+
+    /**
+     * @return file specification string
+     */
+    public static String getFileIdentifier() {
+        return WAVE;
     }
 
     /**

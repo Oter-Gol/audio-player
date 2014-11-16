@@ -7,5 +7,5 @@ public class Main {
         MainForm mainForm = new MainForm();
 
 
+    }
 }
-        }

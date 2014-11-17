@@ -14,17 +14,22 @@ public class GlobalLoader implements Loadable {
 
     public int load( String filePath ) {
 
-        String extension = new String();
-        try {
-            extension = Files.probeContentType( Paths.get( filePath ) );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String file = filePath.substring(filePath.lastIndexOf("\\"));
+        String extension = file.substring(file.indexOf(".") + 1);
+
+        // To-Do
+//        try {
+//            extension = Files.probeContentType( Paths.get( filePath ) );
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+
 
         /* Choosing file decoder */
-        if ( WavLoader.getFileIdentifier().compareTo( extension ) == 0 ) {
+        //if ( WavLoader.getFileIdentifier().compareToIgnoreCase( extension ) == 0 ) {
             loadable = new WavLoader( filePath );
-        }
+        //}
 
         return 0;
     }

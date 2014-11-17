@@ -32,5 +32,9 @@ public class MainForm extends JFrame {
 
         setContentPane( panel1 );
 
+        Core core = new Core();
+
+        core.open( "G:\\1.wav" );
+
     }
 }

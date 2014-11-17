@@ -13,26 +13,35 @@ import org.w3c.dom.Element;
 /**
  * Created by Oleh on 11.11.2014.
  */
-public class XMLParser {
-    private ArrayList<XMLParser> myFormats = new ArrayList<XMLParser>();
+public class XMLConfigParser {
+    private ArrayList<XMLConfigParser> myFormats = new ArrayList<XMLConfigParser>();
     private String name;
     private String [] extension;
+    private int buffer_size;
 
     Document dom;
 
     /**
      * empty constructor
      */
-    public XMLParser(){}
+    public XMLConfigParser(){}
 
     /**
      * constructor which set name and extensions
      * @param name name of format
      * @param extension array of extensions of format
      */
-    public XMLParser(String name, String[] extension){
+    public XMLConfigParser(String name, String[] extension){
         this.name = name;
         this.extension = extension;
+    }
+
+    /**
+     * constructor for buffer size
+     * @param buffer_size save info
+     */
+    public XMLConfigParser( int buffer_size ){
+        this.buffer_size = buffer_size;
     }
 
     /**
@@ -47,7 +56,7 @@ public class XMLParser {
             DocumentBuilder db = dbf.newDocumentBuilder();
 
             //parse using builder to get DOM representation of the XML file
-            dom = db.parse("D:\\audio-player\\GlobalLoader\\Formats\\Formats.xml");
+            dom = db.parse(System.getProperty("user.dir") + "/Configuration/configuration.xml");
 
         }catch(ParserConfigurationException pce) {
             pce.printStackTrace();
@@ -74,8 +83,8 @@ public class XMLParser {
                 //get the format element
                 Element el = ( Element ) nl.item( i );
 
-                //get the Format object
-                XMLParser f = getFormat( el );
+                //get the Format or Settings object
+                XMLConfigParser f = str.equalsIgnoreCase( "Settings" ) ? getSettings( el ) : getFormat( el );
 
                 //add it to list
                 myFormats.add( f );
@@ -86,16 +95,27 @@ public class XMLParser {
     /**
      * reading data from each format
      * @param formEl get info about current element
-     * @return an object of XMLParser
+     * @return an object of XMLConfigParser
      */
-    private XMLParser getFormat( Element formEl ){
+    private XMLConfigParser getFormat( Element formEl ){
         //for each <Format> element get text value of name and extension
         String name = getTextValue( formEl, "name")[0];
 
         String [] extension;
         extension = getTextValue(formEl, "extension");
 
-        return new XMLParser(name, extension);
+        return new XMLConfigParser(name, extension);
+    }
+
+    /**
+     * reading data from Settings
+     * @param formEl get info about current field in XML file
+     * @return an object with buffer size
+     */
+    private XMLConfigParser getSettings( Element formEl ){
+        int buffer_size = Integer.parseInt( getTextValue( formEl, "buffer_size" )[ 0 ] );
+
+        return new XMLConfigParser( buffer_size );
     }
 
     /**
@@ -124,7 +144,7 @@ public class XMLParser {
      * iterates through the list and prints info
      */
     public void printData(){
-        for (XMLParser p : myFormats ) {
+        for (XMLConfigParser p : myFormats ) {
             System.out.println(p.toString());
         }
     }
@@ -136,10 +156,13 @@ public class XMLParser {
     @Override
     public String toString(){
         StringBuilder s = new StringBuilder();
-
-        s.append("format: " + name + ", extensions: " );
-        for (int i = 0; i < extension.length; i++){
-            s.append( extension[i] + " " );
+        if (buffer_size == 0 ) {
+            s.append("format: " + name + ", extensions: ");
+            for (int i = 0; i < extension.length; i++) {
+                s.append(extension[i] + " ");
+            }
+        } else {
+            s.append("buffer_Size " + buffer_size);
         }
         return s.toString();
     }

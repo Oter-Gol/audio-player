@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<Configuration>
+    <Settings>
+        <buffer_size>4000</buffer_size>
+    </Settings>
+    <AveliableFormats>
+        <Format>
+            <name>WAVE</name>
+            <extension>wav</extension>
+            <extension>wave</extension>
+        </Format>
+        <Format>
+            <name>MP3</name>
+            <extension>mp3</extension>
+        </Format>
+    </AveliableFormats>
+</Configuration>

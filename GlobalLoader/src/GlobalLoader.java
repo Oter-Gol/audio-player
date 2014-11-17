@@ -1,7 +1,4 @@
 import javax.sound.sampled.AudioFormat;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 /**
  * Created by Oleh on 08.11.2014.
@@ -67,7 +64,7 @@ public class GlobalLoader implements Loadable {
      * @return array of bytes read from the file
      */
     @Override
-    public byte [] readBytes( int nBytes ) { return loadable.readBytes( nBytes ); }
+    public byte [] readSampledBytes(int nBytes) { return loadable.readSampledBytes(nBytes); }
 
     /**
      * @return format encoding in byte array data of audio file

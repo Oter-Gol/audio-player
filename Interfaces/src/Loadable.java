@@ -34,7 +34,7 @@ public interface Loadable {
      * @param nBytes to read
      * @return array of bytes read from the file
      */
-    public byte [] readBytes( int nBytes );
+    public byte [] readSampledBytes(int nBytes);
 
     /**
      *

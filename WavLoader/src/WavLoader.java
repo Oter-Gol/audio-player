@@ -151,7 +151,7 @@ public class WavLoader implements Loadable {
         /*
          * saves first 0..3 bytes for RIFF
          */
-        buffForFour = readBytes( 4 );
+        buffForFour = readBytes(4);
         /*
          * gets chars from buff for ['R', 'I', 'F', 'F']
          */
@@ -163,12 +163,12 @@ public class WavLoader implements Loadable {
          * reads 4..7 bytes in wavFile and gets cksizeFile
          * the number of bytes in file except RIFF and sizeOf(cksizeFile)
          */
-        cksizeFile = littleEndianByteArrayToInt( readBytes( 4 ) );
+        cksizeFile = littleEndianByteArrayToInt( readBytes(4) );
 
         /*
          * reads 8..11 bytes for word WAVE
          */
-        buffForFour = readBytes( 4 );
+        buffForFour = readBytes(4);
         for ( int i = 0; i < 4; i++ ){
             WAVEID[ i ] = ( char ) buffForFour[ i ];
         }
@@ -207,7 +207,7 @@ public class WavLoader implements Loadable {
         /*
          * saves first 12..15 elements for fmt
          */
-        buffForFour = readBytes( 4 );
+        buffForFour = readBytes(4);
         /*
          * gets chars from buff for ['f', 'm', 't', '']
          */
@@ -218,12 +218,12 @@ public class WavLoader implements Loadable {
         /*
          * reads 16..19 bytes in wavFile and gets cksizefmt
          */
-        cksizefmt = littleEndianByteArrayToInt( readBytes( 4 ) );
+        cksizefmt = littleEndianByteArrayToInt( readBytes(4) );
 
         /*
          * reads 20, 21 bytes. Format code
          */
-        wFormatTag = littleEndianByteArrayToInt( readBytes( 2 ) );
+        wFormatTag = littleEndianByteArrayToInt( readBytes(2) );
 
         /*
          * choose Format Code according to wFormatTag
@@ -234,31 +234,31 @@ public class WavLoader implements Loadable {
          * reads 22,23 bytes. Number of interleaved channels
          * Nc
          */
-        nChannels = littleEndianByteArrayToInt( readBytes( 2 ) );
+        nChannels = littleEndianByteArrayToInt( readBytes(2) );
 
         /*
          * reads 24..27 bytes. Sampling rate (blocks per second)
          * F
          */
-        nSamplePerSec = littleEndianByteArrayToInt( readBytes( 4 ) );
+        nSamplePerSec = littleEndianByteArrayToInt( readBytes(4) );
 
         /*
          * reads 28..31 bytes. Data rate
          * F * M * Nc
          */
-        nAvjBytesPerSec = littleEndianByteArrayToInt( readBytes( 4 ) );
+        nAvjBytesPerSec = littleEndianByteArrayToInt( readBytes(4) );
 
         /*
          * reads 32,33 bytes. Data block size (bytes)
          * M * Nc
          */
-        nBlockAlign = littleEndianByteArrayToInt( readBytes( 2 ) );
+        nBlockAlign = littleEndianByteArrayToInt( readBytes(2) );
 
         /*
          * reads 34,35 bytes. Bits per sample
          * rounds up to 8 * M
          */
-        wBitsPerSample = littleEndianByteArrayToInt( readBytes( 2 ) );
+        wBitsPerSample = littleEndianByteArrayToInt( readBytes(2) );
 
         switch (wFormatTag_enum) {
             case WAVE_FORMAT_PCM:
@@ -297,7 +297,7 @@ public class WavLoader implements Loadable {
          * for size of the extension
          * size of extension = 0
          */
-        cbSizeData = littleEndianByteArrayToInt( readBytes( 2 ) );
+        cbSizeData = littleEndianByteArrayToInt( readBytes(2) );
 
         /*
          * "fact", chunk size: 4, Nc*Ns
@@ -337,7 +337,7 @@ public class WavLoader implements Loadable {
         /*
          *  ckIDData must be "data"
          */
-        buffForFour = readBytes( 4 );
+        buffForFour = readBytes(4);
 
         /*
          * gets chars from buff for ['d', 'a', 't', 'a']
@@ -349,7 +349,7 @@ public class WavLoader implements Loadable {
         /*
          * Chunk size: M * Nc * Ns
          */
-        cksizeData = littleEndianByteArrayToInt( readBytes( 4 ) );
+        cksizeData = littleEndianByteArrayToInt( readBytes(4) );
     }
 
     /**
@@ -363,7 +363,7 @@ public class WavLoader implements Loadable {
         /*
          * Chunk ID: "fact"
          */
-        buffForFour = readBytes( 4 );
+        buffForFour = readBytes(4);
         for ( int i = 0; i < 4; i++ ){
             ckIDNonPCM[ i ] = ( char ) buffForFour[ i ];
         }
@@ -371,12 +371,12 @@ public class WavLoader implements Loadable {
         /*
          * cksizeData Chunk size : 4
          */
-        cksizeData = littleEndianByteArrayToInt( readBytes( 4 ) );
+        cksizeData = littleEndianByteArrayToInt( readBytes(4) );
 
         /*
          * Nc * Ns dwSampleLength
          */
-        dwSampleLength = littleEndianByteArrayToInt( readBytes( 4 ) );
+        dwSampleLength = littleEndianByteArrayToInt( readBytes(4) );
     }
 
     /**
@@ -450,7 +450,7 @@ public class WavLoader implements Loadable {
      * @return array of bytes read from the file
      */
     @Override
-    public byte [] readBytes( int nBytes ){
+    public byte [] readSampledBytes(int nBytes){
 
         int bytesToRead = cksizeData - getCurrentOffset() < nBytes ? cksizeData % nBytes : nBytes;
 
@@ -463,6 +463,19 @@ public class WavLoader implements Loadable {
         }
 
 
+
+        return buff;
+    }
+
+    public byte [] readBytes(int nBytes){
+
+        byte [] buff = new byte[ nBytes ];
+
+        try {
+            wavFile.readFully( buff, 0, nBytes );
+        } catch ( IOException e ){
+            //TO-DO
+        }
 
         return buff;
     }

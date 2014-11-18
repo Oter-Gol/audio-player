@@ -1,5 +1,6 @@
 import javax.sound.sampled.*;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Timer;
@@ -16,6 +17,7 @@ public class Core {
     private AudioFormat audioFormat;
 
 
+    Clip clip;
 
     public int open( String filePath ) {
 
@@ -35,24 +37,45 @@ public class Core {
 
         AudioInputStream audioInputStream = new AudioInputStream( samplesStream, audioFormat, globalLoader.getDataLength() );
 
-        final DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat, 1);
-        SourceDataLine soundLine;
-
-        int bufferSize = 2200;
+        SourceDataLine auline = null;
+        DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
 
         try {
-            soundLine = (SourceDataLine) AudioSystem.getLine(info);
-            soundLine.open(audioFormat);
-
-            soundLine.start();
-            byte counter = 0;
-            final byte[] buffer = new byte[bufferSize];
-
-
-            soundLine.write( samplesBateArray, 0, globalLoader.getDataLength() );
-
+            auline = (SourceDataLine) AudioSystem.getLine(info);
+            auline.open(audioFormat);
         } catch (LineUnavailableException e) {
             e.printStackTrace();
+            return -1;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
+
+//        if (auline.isControlSupported(FloatControl.Type.PAN)) {
+//            FloatControl pan = (FloatControl) auline
+//                    .getControl(FloatControl.Type.PAN);
+//            if (curPosition == Position.RIGHT)
+//                pan.setValue(1.0f);
+//            else if (curPosition == Position.LEFT)
+//                pan.setValue(-1.0f);
+//        }
+
+        auline.start();
+        int nBytesRead = 0;
+        byte[] abData = new byte[20000];
+
+        try {
+            while (nBytesRead != -1) {
+                nBytesRead = audioInputStream.read(abData, 0, abData.length);
+                if (nBytesRead >= 0)
+                    auline.write(abData, 0, nBytesRead);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return -1;
+        } finally {
+            auline.drain();
+            auline.close();
         }
 
 

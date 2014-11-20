@@ -12,15 +12,11 @@ public class WavLoader implements Loadable {
 
     private boolean valid; //if file is valid
 
+    int bufferOffset = 0; // to read data from file. pointer from which position to start
     /*
      * constants
      */
-    private final static String RIFF = new String( "RIFF" ); //constant RIFF, check if WAVE format
-    private final static String WAVE = new String( "WAVE" ); //constant WAVE, check if WAVE format
-    private final static String FMT  = new String( "fmt " ); //constant fmt , check if WAVE format
-    private final static String DATA = new String( "data" ); //constant data
-    private final static String FACT = new String( "fact" ); //constant fact, Non-PCM
-
+    private final static String WAVE = "WAVE"; //constant WAVE, check if WAVE format
     /*
      * common variables
      */
@@ -64,9 +60,9 @@ public class WavLoader implements Loadable {
     /*
      * data offset for all formats
      */
-    private static final int PCM_Offset = 44;
-    private static final int Non_PCM_Offset = 0; // To-Do
-    private static final int EXTENSIBLE_Offset = 0; // To-Do
+    private int PCM_Offset = 44;
+    private int Non_PCM_Offset = 0; // To-Do
+    private int EXTENSIBLE_Offset = 0; // To-Do
 
     private AudioFormat.Encoding encoding;
 
@@ -107,7 +103,6 @@ public class WavLoader implements Loadable {
     }
 
     private Format_Code wFormatTag_enum;
-    private double wavDurationInSeconds; // the duration of current wav file
 
 
     /*
@@ -116,7 +111,6 @@ public class WavLoader implements Loadable {
 
     /**
      * constructor for wave loader
-     * @param filePath
      */
     public WavLoader( String filePath ) {
         valid = true;
@@ -127,18 +121,61 @@ public class WavLoader implements Loadable {
             //TO-DO
         }
 
-        if ( isValid() ) {
-            readFormatChunk();
+        if ( readWaveFileFormat() == -1 ){
+            valid = false;
         }
+
+        if ( isValid() ) {
+            if ( readFormatChunk() == -1 ){
+                valid = false;
+            }
+        }
+
+    }
+
+    /**
+     * method to determine position which points after chunkID data part
+     * makes the process of finding junk sections easier
+     * @param chunkID which string to find
+     * @param startOffset from which position to start the search
+     * @param endOffset on which byte end the search
+     * @return position after the certain word
+     */
+    public int getOffsetByChunk( String chunkID, int startOffset, int endOffset ) {
+
+        for (int i = startOffset; i < endOffset; i++) {
+            try {
+                wavFile.seek( i );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            char [ ] charBuff = new char [ chunkID.length() ];
+            byte [] byteBuff = new byte[ chunkID.length() ];
+
+
+            try {
+                wavFile.readFully( byteBuff, 0, byteBuff.length );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            for ( int j = 0; j < chunkID.length(); j++ ){
+                charBuff[ j ] = ( char ) byteBuff[ j ];
+            }
+
+            if ( chunkID.equals( new String( charBuff ) ) ) {
+                return i + chunkID.length();
+            }
+        }
+        return -1;
     }
 
     /**
      * reads File Format structure
-     * @return 0 if everything is ok, -1 if file isn't WAVE
+     * valid = false if there's no word WAVE or RIFF
      */
-    public void readWaveFileFormat(){
-        byte [] buffForFour; // is necessary for reading files
-
+    public int readWaveFileFormat(){
         /*
          * set pointer to the beginning of wavFile
          */
@@ -150,13 +187,12 @@ public class WavLoader implements Loadable {
 
         /*
          * saves first 0..3 bytes for RIFF
-         */
-        buffForFour = readBytes(4);
-        /*
          * gets chars from buff for ['R', 'I', 'F', 'F']
          */
-        for ( int i = 0; i < 4; i++ ){
-            ckIDFile[ i ] = ( char ) buffForFour[ i ];
+        bufferOffset = getOffsetByChunk("RIFF", bufferOffset, bufferOffset + 4);
+        if ( bufferOffset == -1 ){
+            System.out.println("pizdec");
+            return -1;
         }
 
         /*
@@ -164,28 +200,35 @@ public class WavLoader implements Loadable {
          * the number of bytes in file except RIFF and sizeOf(cksizeFile)
          */
         cksizeFile = littleEndianByteArrayToInt( readBytes(4) );
+        bufferOffset += 4;
 
         /*
          * reads 8..11 bytes for word WAVE
          */
-        buffForFour = readBytes(4);
-        for ( int i = 0; i < 4; i++ ){
-            WAVEID[ i ] = ( char ) buffForFour[ i ];
+        bufferOffset = getOffsetByChunk("WAVE", bufferOffset, bufferOffset + 4);
+        if ( bufferOffset == -1 ){
+            System.out.println("pizdec");
+            return -1;
+        }
+        /*
+         * check if the next word after WAVE is JUNK
+         * if so, make offset equals to 4 and skip word JUNK
+         */
+        bufferOffset = getOffsetByChunk("JUNK", bufferOffset, bufferOffset + 4);
+        if ( bufferOffset != -1 ){
+            bufferOffset += littleEndianByteArrayToInt( readBytes( 4 ) ) + 4;
         }
 
         /*
-         * checks if wavFile has WAVE format
+         * gets chars from buff for ['f', 'm', 't', ' ']
          */
-        if ( !( ( RIFF.equals( new String( ckIDFile ) ) ) &&
-            ( WAVE.equals( new String( WAVEID ) ) ) ) ) {
-            valid = false;
-            try {
-                wavFile.close();
-            } catch (IOException e) {
-                //TO-DO
-            }
+        bufferOffset = getOffsetByChunk( "fmt ", bufferOffset, bufferOffset + 4);
+        if ( bufferOffset == -1 ){
+            System.out.println("pizdec");
+            return -1;
         }
 
+        return 0;
     }
 
     /**
@@ -193,35 +236,13 @@ public class WavLoader implements Loadable {
      * @return 0 if everything ok, else -1
      */
     public int readFormatChunk() {
-        byte [] buffForFour; // array of bytes size 4
-
         /*
-         * set pointer to the 12th position
-         */
-        try {
-            wavFile.seek( 12 );
-        } catch (IOException e ) {
-            //TO-DO
-        }
-
-        /*
-         * saves first 12..15 elements for fmt
-         */
-        buffForFour = readBytes(4);
-        /*
-         * gets chars from buff for ['f', 'm', 't', '']
-         */
-        for ( int i = 0; i < 4; i++ ){
-            ckIDfmt[ i ] = ( char ) buffForFour[ i ];
-        }
-
-        /*
-         * reads 16..19 bytes in wavFile and gets cksizefmt
+         * gets cksizefmt
          */
         cksizefmt = littleEndianByteArrayToInt( readBytes(4) );
 
         /*
-         * reads 20, 21 bytes. Format code
+         * Format code
          */
         wFormatTag = littleEndianByteArrayToInt( readBytes(2) );
 
@@ -231,35 +252,39 @@ public class WavLoader implements Loadable {
         wFormatTag_enum = Format_Code.fromInt( wFormatTag );
 
         /*
-         * reads 22,23 bytes. Number of interleaved channels
+         * Number of interleaved channels
          * Nc
          */
         nChannels = littleEndianByteArrayToInt( readBytes(2) );
 
         /*
-         * reads 24..27 bytes. Sampling rate (blocks per second)
+         * Sampling rate (blocks per second)
          * F
          */
         nSamplePerSec = littleEndianByteArrayToInt( readBytes(4) );
 
         /*
-         * reads 28..31 bytes. Data rate
+         * Data rate
          * F * M * Nc
          */
         nAvjBytesPerSec = littleEndianByteArrayToInt( readBytes(4) );
 
         /*
-         * reads 32,33 bytes. Data block size (bytes)
+         * Data block size (bytes)
          * M * Nc
          */
         nBlockAlign = littleEndianByteArrayToInt( readBytes(2) );
 
         /*
-         * reads 34,35 bytes. Bits per sample
+         * Bits per sample
          * rounds up to 8 * M
          */
         wBitsPerSample = littleEndianByteArrayToInt( readBytes(2) );
 
+        bufferOffset += 22; // all necessary info about file contains in 22 bytes
+        /*
+         * read header according to the format
+         */
         switch (wFormatTag_enum) {
             case WAVE_FORMAT_PCM:
                 readPCMHeader();
@@ -281,11 +306,10 @@ public class WavLoader implements Loadable {
      */
     public int readPCMHeader(){
         /*
-         * Chunk ID: "data", chunk size
+         * check if file is valid
+         * if there is word "data"
          */
-        common_ckID_cksize();
-
-        return 0;
+        return common_ckID_cksize() == -1 ? -1 : 0;
     }
 
     /**
@@ -309,7 +333,11 @@ public class WavLoader implements Loadable {
          */
         common_ckID_cksize();
 
-        return 0;
+        /*
+         * check if file is valid
+         * if there are "fact" and "data"
+         */
+        return common_NonPCM_Extensible() == -1 || common_ckID_cksize() == -1 ? -1 : 0;
     }
 
     /**
@@ -331,25 +359,18 @@ public class WavLoader implements Loadable {
      * the word "data" and the chunk size
      * its common for PCM, Non-PCM and Extensible
      */
-    public void common_ckID_cksize(){
-        byte [] buffForFour; // array of bytes size 4
-
-        /*
-         *  ckIDData must be "data"
-         */
-        buffForFour = readBytes(4);
-
+    public int common_ckID_cksize(){
         /*
          * gets chars from buff for ['d', 'a', 't', 'a']
          */
-        for ( int i = 0; i < 4; i++ ){
-            ckIDData[ i ] = ( char ) buffForFour[ i ];
-        }
+        bufferOffset = getOffsetByChunk( "data", bufferOffset , 200 );
 
         /*
          * Chunk size: M * Nc * Ns
          */
         cksizeData = littleEndianByteArrayToInt( readBytes(4) );
+
+        return bufferOffset == -1 ? -1 : 0;
     }
 
     /**
@@ -357,16 +378,13 @@ public class WavLoader implements Loadable {
      *  ckID - chunk ID:"fact"
      *  ckSize chunk size :4
      */
-    public void common_NonPCM_Extensible(){
-        byte [] buffForFour; // array of bytes size 4
-
+    public int common_NonPCM_Extensible(){
         /*
-         * Chunk ID: "fact"
+         * Chunk ID: "fact" if the word is in the file
+         * gets the position after "fact"
+         * otherwise gets -1
          */
-        buffForFour = readBytes(4);
-        for ( int i = 0; i < 4; i++ ){
-            ckIDNonPCM[ i ] = ( char ) buffForFour[ i ];
-        }
+        bufferOffset = getOffsetByChunk("fact", bufferOffset, 200);
 
         /*
          * cksizeData Chunk size : 4
@@ -377,6 +395,8 @@ public class WavLoader implements Loadable {
          * Nc * Ns dwSampleLength
          */
         dwSampleLength = littleEndianByteArrayToInt( readBytes(4) );
+
+        return bufferOffset == -1 ? -1 : 0;
     }
 
     /**
@@ -410,7 +430,7 @@ public class WavLoader implements Loadable {
      */
     @Override
     public int getCurrentOffset() {
-        int retValue = 0;
+        int retValue;
 
         switch ( wFormatTag_enum ) {
             case WAVE_FORMAT_PCM:
@@ -427,7 +447,7 @@ public class WavLoader implements Loadable {
     }
 
     /**
-     *
+     * get data length
      * @return number of bytes in data chunk
      */
     @Override
@@ -445,12 +465,12 @@ public class WavLoader implements Loadable {
     }
 
     /**
-     * reads certain number of bytes in wavFile
+     * reads certain number of sampled bytes in wavFile
      * @param nBytes to read
      * @return array of bytes read from the file
      */
     @Override
-    public byte [] readSampledBytes(int nBytes){
+    public byte [] readSampleBytes(int nBytes){
 
         int bytesToRead = cksizeData - getCurrentOffset() < nBytes ? cksizeData % nBytes : nBytes;
 
@@ -461,12 +481,14 @@ public class WavLoader implements Loadable {
         } catch ( IOException e ){
             //TO-DO
         }
-
-
-
         return buff;
     }
 
+    /**
+     * read certain amount of bytes
+     * @param nBytes number of bytes to read from file
+     * @return array of bytes
+     */
     public byte [] readBytes(int nBytes){
 
         byte [] buff = new byte[ nBytes ];
@@ -489,7 +511,7 @@ public class WavLoader implements Loadable {
     }
 
     /**
-     * @return
+     * @return sample rate
      */
     @Override
     public float getSampleRate() {
@@ -497,7 +519,7 @@ public class WavLoader implements Loadable {
     }
 
     /**
-     * @return
+     * @return sample size in bits
      */
     @Override
     public int getSampleSizeInBits() {
@@ -505,7 +527,7 @@ public class WavLoader implements Loadable {
     }
 
     /**
-     * @return
+     * @return number of channels
      */
     @Override
     public int getChannels() {
@@ -513,7 +535,7 @@ public class WavLoader implements Loadable {
     }
 
     /**
-     * @return
+     * @return frame size
      */
     @Override
     public int getFrameSize() {
@@ -521,7 +543,7 @@ public class WavLoader implements Loadable {
     }
 
     /**
-     * @return
+     * @return frame rate
      */
     @Override
     public float getFrameRate() {
@@ -538,7 +560,7 @@ public class WavLoader implements Loadable {
     /**
      * makes int value from array of bytes
      * the value of int depends on the length of array.
-     * @param b
+     * @param b which array to convert
      * @return int value
      */
     public static int littleEndianByteArrayToInt(byte[] b)

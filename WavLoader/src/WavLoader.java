@@ -60,9 +60,8 @@ public class WavLoader implements Loadable {
     /*
      * data offset for all formats
      */
-    private int PCM_Offset = 44;
-    private int Non_PCM_Offset = 0; // To-Do
-    private int EXTENSIBLE_Offset = 0; // To-Do
+    private int dataOffset;
+    private int fmtOffset;
 
     private AudioFormat.Encoding encoding;
 
@@ -215,21 +214,26 @@ public class WavLoader implements Loadable {
         /*
          * check if the next word after WAVE is JUNK
          * if so, make offset equals to 4 and skip word JUNK
+         *
+         * if there is no JUNK chunk in audio file remember old offset
+         * TO-DO!! Think if it is necessary to provide this functionality
          */
+        int oldBufferOffset = bufferOffset;
         bufferOffset = getOffsetByChunk("JUNK", bufferOffset, bufferOffset + 4);
         if ( bufferOffset != -1 ){
             bufferOffset += littleEndianByteArrayToInt( readBytes( 4 ) ) + 4;
+        } else {
+            bufferOffset = oldBufferOffset;
         }
 
         /*
          * gets chars from buff for ['f', 'm', 't', ' ']
          */
-        bufferOffset = getOffsetByChunk( "fmt ", bufferOffset, bufferOffset + 4);
+        bufferOffset = getOffsetByChunk( "fmt ", bufferOffset, bufferOffset + 50 );
         if ( bufferOffset == -1 ){
             System.out.println("pizdec");
             return -1;
         }
-
         return 0;
     }
 
@@ -365,14 +369,16 @@ public class WavLoader implements Loadable {
         /*
          * gets chars from buff for ['d', 'a', 't', 'a']
          */
-        bufferOffset = getOffsetByChunk( "data", bufferOffset , 200 );
+        //To-Do Something wrong in with offset bufferOffset argument
+        bufferOffset = getOffsetByChunk( "data", 1 , 200 );
+        dataOffset = bufferOffset;
 
         /*
          * Chunk size: M * Nc * Ns
          */
         cksizeData = littleEndianByteArrayToInt( readBytes(4) );
 
-        return bufferOffset == -1 ? -1 : 0;
+        return bufferOffset;
     }
 
     /**
@@ -402,39 +408,16 @@ public class WavLoader implements Loadable {
     }
 
     /**
-     * sets current offset in file relative to the zero
+     * sets current position of audio play back
      * byte in data section
      */
     @Override
-    public void setCurrentOffset( int offset) {
+    public void setCurrentPosition(int offset) {
 
-        switch ( wFormatTag_enum ) {
-            case WAVE_FORMAT_PCM:
-                currentFileOffset = PCM_Offset + offset;
-                break;
-            case WAVE_FORMAT_EXTENSIBLE:
-                currentFileOffset = EXTENSIBLE_Offset + offset;
-                break;
-            default:
-                currentFileOffset = Non_PCM_Offset + offset;
-                break;
-        }
-        // To-Do!
-        if ( cksizeData < currentFileOffset ) {
-            switch ( wFormatTag_enum ) {
-                case WAVE_FORMAT_PCM:
-                    currentFileOffset = PCM_Offset + cksizeData;
-                    break;
-                case WAVE_FORMAT_EXTENSIBLE:
-                    currentFileOffset = EXTENSIBLE_Offset + cksizeData;
-                    break;
-                default:
-                    currentFileOffset = Non_PCM_Offset + cksizeData;
-                    break;
-            }
-        }
+        currentFileOffset = offset + dataOffset;
+
         try {
-            wavFile.seek( currentFileOffset );
+            wavFile.seek(currentFileOffset);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -446,21 +429,8 @@ public class WavLoader implements Loadable {
      * @return current offset in samples in file
      */
     @Override
-    public int getCurrentOffset() {
-        int retValue = 0;
-
-        switch ( wFormatTag_enum ) {
-            case WAVE_FORMAT_PCM:
-                retValue = currentFileOffset + PCM_Offset;
-                break;
-            case WAVE_FORMAT_EXTENSIBLE:
-                retValue = currentFileOffset + EXTENSIBLE_Offset;
-                break;
-            default:
-                retValue = currentFileOffset + Non_PCM_Offset;
-                break;
-        }
-        return retValue;
+    public int getCurrentPosition() {
+        return currentFileOffset - dataOffset;
     }
 
     /**
@@ -492,15 +462,14 @@ public class WavLoader implements Loadable {
 
         int bytesToRead = 0;
 
-        byte [] buff = null;
+        if ( cksizeData - getCurrentPosition() != 0 ) {
+            int delta = cksizeData - getCurrentPosition();
 
-        if ( cksizeData - getCurrentOffset() != 0 ) {
-            bytesToRead = cksizeData - getCurrentOffset() - nBytes < 0 ? cksizeData % nBytes : nBytes;
-            setCurrentOffset( getCurrentOffset() + bytesToRead );
-            buff = new byte[ bytesToRead ];
+            bytesToRead = delta - nBytes < 0 ? delta : nBytes;
+            setCurrentPosition(getCurrentPosition() + bytesToRead);
 
             try {
-                wavFile.readFully( buff, 0, bytesToRead );
+                wavFile.readFully( samplesBuff, 0, bytesToRead );
             } catch ( IOException e ){
                 System.out.println( "We have a problem" );
             }

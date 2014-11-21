@@ -34,7 +34,7 @@ public class GlobalLoader implements Loadable {
      * byte in data section
      */
     @Override
-    public void setCurrentPosition(int offset) { loadable.setCurrentPosition(offset); }
+    public void setCurrentPosition(int position) { loadable.setCurrentPosition(position); }
 
     /**
      * gets current offset in file relative to the zero

@@ -34,7 +34,7 @@ public class GlobalLoader implements Loadable {
      * byte in data section
      */
     @Override
-    public void setCurrentOffset( int offset) { loadable.setCurrentOffset( offset ); }
+    public void setCurrentPosition(int offset) { loadable.setCurrentPosition(offset); }
 
     /**
      * gets current offset in file relative to the zero
@@ -42,7 +42,7 @@ public class GlobalLoader implements Loadable {
      * @return current offset in samples in file
      */
     @Override
-    public int getCurrentOffset() { return loadable.getCurrentOffset(); }
+    public int getCurrentPosition() { return loadable.getCurrentPosition(); }
 
     /**
      * @return number of bytes in data chunk

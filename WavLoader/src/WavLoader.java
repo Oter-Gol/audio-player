@@ -115,11 +115,10 @@ public class WavLoader implements Loadable {
      */
     public WavLoader( String filePath ) {
         valid = true;
-
         try{
             wavFile = new RandomAccessFile( filePath, "r");
         } catch( FileNotFoundException e ) {
-            //TO-DO
+            Logger.writeInFile(e.toString());
         }
 
         if ( readWaveFileFormat() == -1 ){
@@ -148,7 +147,7 @@ public class WavLoader implements Loadable {
             try {
                 wavFile.seek( i );
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.writeInFile(e.toString());
             }
 
             char [ ] charBuff = new char [ chunkID.length() ];
@@ -158,7 +157,7 @@ public class WavLoader implements Loadable {
             try {
                 wavFile.readFully( byteBuff, 0, byteBuff.length );
             } catch (IOException e) {
-                e.printStackTrace();
+                Logger.writeInFile(e.toString());
             }
 
             for ( int j = 0; j < chunkID.length(); j++ ){
@@ -183,7 +182,7 @@ public class WavLoader implements Loadable {
         try {
             wavFile.seek( 0 );
         } catch (IOException e ) {
-            //TO-DO
+            Logger.writeInFile(e.toString());
         }
 
         /*
@@ -192,7 +191,7 @@ public class WavLoader implements Loadable {
          */
         bufferOffset = getOffsetByChunk("RIFF", bufferOffset, bufferOffset + 4);
         if ( bufferOffset == -1 ){
-            System.out.println("pizdec");
+            Logger.writeInFile("Impossible to read the file. RIFF word not found. Is not WAVE format");
             return -1;
         }
 
@@ -208,30 +207,16 @@ public class WavLoader implements Loadable {
          */
         bufferOffset = getOffsetByChunk("WAVE", bufferOffset, bufferOffset + 4);
         if ( bufferOffset == -1 ){
-            System.out.println("pizdec");
+            Logger.writeInFile("impossible to read the file. WAVE word not found. Is not WAVE format");
             return -1;
-        }
-        /*
-         * check if the next word after WAVE is JUNK
-         * if so, make offset equals to 4 and skip word JUNK
-         *
-         * if there is no JUNK chunk in audio file remember old offset
-         * TO-DO!! Think if it is necessary to provide this functionality
-         */
-        int oldBufferOffset = bufferOffset;
-        bufferOffset = getOffsetByChunk("JUNK", bufferOffset, bufferOffset + 4);
-        if ( bufferOffset != -1 ){
-            bufferOffset += littleEndianByteArrayToInt( readBytes( 4 ) ) + 4;
-        } else {
-            bufferOffset = oldBufferOffset;
         }
 
         /*
          * gets chars from buff for ['f', 'm', 't', ' ']
          */
-        bufferOffset = getOffsetByChunk( "fmt ", bufferOffset, bufferOffset + 50 );
+        bufferOffset = getOffsetByChunk( "fmt ", bufferOffset, bufferOffset + 150 );
         if ( bufferOffset == -1 ){
-            System.out.println("pizdec");
+            Logger.writeInFile("impossible to read the file. fmt  word not found. Is not WAVE format");
             return -1;
         }
         return 0;
@@ -288,22 +273,28 @@ public class WavLoader implements Loadable {
         wBitsPerSample = littleEndianByteArrayToInt( readBytes(2) );
 
         bufferOffset += 22; // all necessary info about file contains in 22 bytes
+
+        int checkValue;
         /*
          * read header according to the format
          */
         switch (wFormatTag_enum) {
             case WAVE_FORMAT_PCM:
-                readPCMHeader();
+                checkValue = readPCMHeader();
                 break;
             case WAVE_FORMAT_EXTENSIBLE:
-                readExtensibleHeader();
+                checkValue = readExtensibleHeader();
                 break;
             default:
-                readNonPCMHeader();
+                checkValue = readNonPCMHeader();
         }
 
-        //TO-DO checking
-        return 0;
+        if ( checkValue == -1 ){
+            Logger.writeInFile("the file is not valid. No data section");
+            return -1;
+        } else {
+            return 0;
+        }
     }
 
     /**
@@ -419,7 +410,7 @@ public class WavLoader implements Loadable {
         try {
             wavFile.seek(currentFileOffset);
         } catch (IOException e) {
-            e.printStackTrace();
+            Logger.writeInFile(e.toString());
         }
     }
 
@@ -471,7 +462,7 @@ public class WavLoader implements Loadable {
             try {
                 wavFile.readFully( samplesBuff, 0, bytesToRead );
             } catch ( IOException e ){
-                System.out.println( "We have a problem" );
+                Logger.writeInFile(e.toString());
             }
         }
 
@@ -490,7 +481,7 @@ public class WavLoader implements Loadable {
         try {
             wavFile.readFully( buff, 0, nBytes );
         } catch ( IOException e ){
-            //TO-DO
+            Logger.writeInFile(e.toString());
         }
 
         return buff;

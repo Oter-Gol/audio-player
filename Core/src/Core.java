@@ -1,6 +1,4 @@
 import javax.sound.sampled.*;
-import javax.swing.text.PlainDocument;
-import java.io.IOException;
 import java.util.Timer;
 
 /**
@@ -18,6 +16,8 @@ public class Core {
      */
     private int bufferSize = DEFAULT_BUFFER_SIZE;
 
+    private int seekValue;
+
     private GlobalLoader globalLoader = new GlobalLoader();
 
     private Timer timer;
@@ -34,84 +34,72 @@ public class Core {
 
     private class PlayingThread implements Runnable {
 
-        int timeSeek;
+        Thread thread;
+        boolean pause = false;
 
-        public int playPause() {
-
-            // To-Do perform check for valid format
-
-            // States for state machine
-            if ( playingState == PlayingStates.STOP ) {
-                playingState = PlayingStates.PLAY;
-
-                run();
-
-            } else {
-                if ( playingState == PlayingStates.PLAY ) {
-                    playingState = PlayingStates.PAUSE;
-
-                } else {
-                    playingState = PlayingStates.PLAY;
-                }
+        public void start ()
+        {
+            System.out.println( "Starting thread" );
+            if ( thread == null )
+            {
+                thread = new Thread( this );
+                thread.start ();
             }
-
-            return 0;
         }
 
-        public int seek( int timeSeek ) { return 0; }
-
-        public int stop() {
-            return 0;
-        }
-
-        /**
-         * When an object implementing interface <code>Runnable</code> is used
-         * to create a thread, starting the thread causes the object's
-         * <code>run</code> method to be called in that separately executing
-         * thread.
-         * <p/>
-         * The general contract of the method <code>run</code> is that it may
-         * take any action whatsoever.
-         *
-         * @see Thread#run()
-         */
-        @Override
         public void run() {
 
-            SourceDataLine auline = null;
-            DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
-
+            SourceDataLine audioLine = null;
             try {
-                auline = (SourceDataLine) AudioSystem.getLine(info);
-                auline.open(audioFormat);
-            } catch (LineUnavailableException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+                DataLine.Info info = new DataLine.Info( SourceDataLine.class, audioFormat );
 
-            auline.start();
+                try {
+                    audioLine = (SourceDataLine) AudioSystem.getLine(info);
+                    audioLine.open( audioFormat );
+                } catch (LineUnavailableException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-            int nBytesRead = 0;
+                audioLine.start();
 
-            byte[] samplesRead = new byte[ bufferSize ];
+                int nBytesRead;
+                byte[] samplesRead = new byte[ bufferSize ];
 
-            nBytesRead = globalLoader.readSampledBytes( bufferSize, samplesRead );
-
-            globalLoader.setCurrentOffset( 0 );
-
-            while (nBytesRead != 0) {
-                auline.write(samplesRead, 0, nBytesRead );
                 nBytesRead = globalLoader.readSampledBytes( bufferSize, samplesRead );
+
+                while ( nBytesRead != 0 ) {
+                    synchronized( this ) {
+                        while ( pause ) {
+                            wait();
+                        }
+                    }
+
+                    audioLine.write(samplesRead, 0, nBytesRead );
+                    nBytesRead = globalLoader.readSampledBytes( bufferSize, samplesRead );
+                }
+            } catch (InterruptedException e) {
+                    e.printStackTrace();
+            } finally {
+                    audioLine.drain();
+                    audioLine.close();
             }
 
-            auline.drain();
-            auline.close();
 
         }
+
+        void pause() {
+            pause = true;
+        }
+        synchronized void resume() {
+            pause = false;
+            notify();
+        }
+
     }
 
-   public PlayingThread playingThread;
+   private PlayingThread playingThread;
 
 
     public int open( String filePath ) {
@@ -123,7 +111,9 @@ public class Core {
                     globalLoader.getChannels(), true, false);
         }
 
+        globalLoader.setCurrentPosition( 0 );
         playingThread = new PlayingThread();
+
 
         return 0;
     }
@@ -147,12 +137,43 @@ public class Core {
 
     public int playPause() {
 
-        return playingThread.playPause();
+        if ( playingState == PlayingStates.STOP ) {
+            playingState = PlayingStates.PLAY;
+
+            playingThread.start();
+            playingThread.resume();
+
+
+        } else {
+            if ( playingState == PlayingStates.PLAY ) {
+                playingState = PlayingStates.PAUSE;
+
+                playingThread.pause();
+
+            } else {
+                playingState = PlayingStates.PLAY;
+            }
+        }
+
+
+        return 0;
     }
 
-    public int seek( int timeSeek ) { return 0; }
+    public int seekPlaying( int seekValue ) {
+        playingThread.pause();
+        globalLoader.setCurrentPosition( seekValue );
+
+        if ( playingState == PlayingStates.PLAY ) {
+            playingThread.resume();
+        }
+
+        return 0;
+    }
 
     public int stop() {
+        playingState = PlayingStates.STOP;
+        seekPlaying( 0 );
+
         return 0;
     }
 

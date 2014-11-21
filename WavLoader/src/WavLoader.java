@@ -399,7 +399,22 @@ public class WavLoader implements Loadable {
         }
         // To-Do!
         if ( cksizeData < currentFileOffset ) {
-            currentFileOffset = 0;
+            switch ( wFormatTag_enum ) {
+                case WAVE_FORMAT_PCM:
+                    currentFileOffset = PCM_Offset + cksizeData;
+                    break;
+                case WAVE_FORMAT_EXTENSIBLE:
+                    currentFileOffset = EXTENSIBLE_Offset + cksizeData;
+                    break;
+                default:
+                    currentFileOffset = Non_PCM_Offset + cksizeData;
+                    break;
+            }
+        }
+        try {
+            wavFile.seek( currentFileOffset );
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -414,13 +429,13 @@ public class WavLoader implements Loadable {
 
         switch ( wFormatTag_enum ) {
             case WAVE_FORMAT_PCM:
-                retValue = currentFileOffset - PCM_Offset;
+                retValue = currentFileOffset + PCM_Offset;
                 break;
             case WAVE_FORMAT_EXTENSIBLE:
-                retValue = currentFileOffset - EXTENSIBLE_Offset;
+                retValue = currentFileOffset + EXTENSIBLE_Offset;
                 break;
             default:
-                retValue = currentFileOffset - Non_PCM_Offset;
+                retValue = currentFileOffset + Non_PCM_Offset;
                 break;
         }
         return retValue;
@@ -447,24 +462,29 @@ public class WavLoader implements Loadable {
     /**
      * reads certain number of bytes in wavFile
      * @param nBytes to read
+     * @param samplesBuff
      * @return array of bytes read from the file
      */
     @Override
-    public byte [] readSampledBytes(int nBytes){
+    public int readSampledBytes(int nBytes, byte[] samplesBuff){
 
-        int bytesToRead = cksizeData - getCurrentOffset() < nBytes ? cksizeData % nBytes : nBytes;
+        int bytesToRead = 0;
 
-        byte [] buff = new byte[ bytesToRead ];
+        byte [] buff = null;
 
-        try {
-            wavFile.readFully( buff, 0, bytesToRead );
-        } catch ( IOException e ){
-            //TO-DO
+        if ( cksizeData - getCurrentOffset() != 0 ) {
+            bytesToRead = cksizeData - getCurrentOffset() - nBytes < 0 ? cksizeData % nBytes : nBytes;
+            setCurrentOffset( getCurrentOffset() + bytesToRead );
+            buff = new byte[ bytesToRead ];
+
+            try {
+                wavFile.readFully( buff, 0, bytesToRead );
+            } catch ( IOException e ){
+                System.out.println( "We have a problem" );
+            }
         }
 
-
-
-        return buff;
+        return bytesToRead;
     }
 
     public byte [] readBytes(int nBytes){

@@ -16,11 +16,7 @@ public class Core {
      */
     private int bufferSize = DEFAULT_BUFFER_SIZE;
 
-    private int seekValue;
-
     private GlobalLoader globalLoader = new GlobalLoader();
-
-    private Timer timer;
 
     private AudioFormat audioFormat;
 
@@ -34,6 +30,7 @@ public class Core {
 
     private class PlayingThread implements Runnable {
 
+        SourceDataLine audioLine = null;
         Thread thread;
         boolean pause = false;
 
@@ -47,9 +44,11 @@ public class Core {
             }
         }
 
+
+
         public void run() {
 
-            SourceDataLine audioLine = null;
+
             try {
                 DataLine.Info info = new DataLine.Info( SourceDataLine.class, audioFormat );
 
@@ -91,6 +90,8 @@ public class Core {
 
         void pause() {
             pause = true;
+            audioLine.flush();
+            audioLine.start();
         }
         synchronized void resume() {
             pause = false;
@@ -141,7 +142,7 @@ public class Core {
             playingState = PlayingStates.PLAY;
 
             playingThread.start();
-            playingThread.resume();
+            //seekPlaying( 0 );
 
 
         } else {
@@ -152,6 +153,7 @@ public class Core {
 
             } else {
                 playingState = PlayingStates.PLAY;
+                playingThread.resume();
             }
         }
 

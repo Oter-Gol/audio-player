@@ -1,6 +1,4 @@
 import javax.swing.*;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -18,9 +16,15 @@ public class MainForm extends JFrame {
     private JList list1;
     private JButton addButton;
 
+    ImageIcon playIcon = new ImageIcon( "rc/play_32x32.png" );
+    ImageIcon pauseIcon = new ImageIcon("rc/pause_32x32.png");
+
+
+
 
     public MainForm() {
         super("Simple Java based player");
+
 
         setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
         pack();
@@ -51,6 +55,13 @@ public class MainForm extends JFrame {
                 super.mouseClicked(e);
 
                 core.playPause();
+                if ( core.getPlayingState() == Core.PlayingStates.PLAY ) {
+                    playButton.setIcon( pauseIcon );
+                } else {
+                    if ( core.getPlayingState() == Core.PlayingStates.PAUSE ) {
+                        playButton.setIcon( playIcon );
+                    }
+                }
             }
         });
         addButton.addMouseListener(new MouseAdapter() {
@@ -63,7 +74,7 @@ public class MainForm extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
 
-                core.open( "G:\\2.wav" );
+                core.open( "G:\\1.wav" );
             }
         });
     }

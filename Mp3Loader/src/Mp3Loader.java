@@ -4,6 +4,7 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.SourceDataLine;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 
 
@@ -12,29 +13,39 @@ import java.io.InputStream;
  */
 
 
+
 public class Mp3Loader implements Loadable {
 
     private int frameCount;
+    private boolean valid;
+    private int currentFramePosition;
+
+    AudioFormat audioFormat;
+    Decoder decoder;
+    Bitstream stream;
 
     public Mp3Loader( String filePath ){
 
+
         InputStream in = null;
+        valid = true;
+
         try {
             in = new FileInputStream( filePath );
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 
-        int frameCount = Integer.MAX_VALUE;
+        int maxFrameCount = Integer.MAX_VALUE;
 
         // int testing;
-        // frameCount = 100;
+        // maxFrameCount = 100;
 
-        Decoder decoder = new Decoder();
-        Bitstream stream = new Bitstream(in);
-        SourceDataLine line = null;
+        //
+        stream = new Bitstream( in );
         int error = 0;
-        for (int frame = 0; frame < frameCount; frame++) {
+        int frame;
+        for (frame = 1; frame < maxFrameCount; frame++) {
 //            if (pause) {
 //                line.stop();
 //                while (pause && !stop) {
@@ -90,25 +101,32 @@ public class Mp3Loader implements Loadable {
                 stream.closeFrame();
             }
         }
+
+        frameCount = frame;
+
+        decoder = new Decoder();
+        stream = new Bitstream( in );
+
         if (error > 0) {
             System.out.println("errors: " + error);
         }
         //in.close();
-        if (line != null) {
-            line.stop();
-            line.close();
-            line = null;
-        }
+//        if (line != null) {
+//            line.stop();
+//            line.close();
+//            line = null;
+//        }
 
     }
     /**
-     * sets current offset in file relative to the zero
+     * sets current position in file relative to the zero
      * byte in data section
      *
-     * @param offset
+     * @param position
      */
     @Override
-    public void setCurrentPosition(int offset) {
+    public void setCurrentPosition(int position) {
+        currentFramePosition = position;
 
     }
 
@@ -120,7 +138,7 @@ public class Mp3Loader implements Loadable {
      */
     @Override
     public int getCurrentPosition() {
-        return 0;
+        return currentFramePosition;
     }
 
     /**
@@ -128,7 +146,7 @@ public class Mp3Loader implements Loadable {
      */
     @Override
     public int getDataLength() {
-        return 0;
+        return frameCount;
     }
 
     /**
@@ -138,7 +156,7 @@ public class Mp3Loader implements Loadable {
      */
     @Override
     public boolean isValid() {
-        return false;
+        return valid;
     }
 
     /**
@@ -150,6 +168,47 @@ public class Mp3Loader implements Loadable {
      */
     @Override
     public int readSampledBytes(int nBytes, byte[] samplesBuff) {
+
+        Header header = null;
+        try {
+            header = stream.readFrame();
+
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        if (header == null) {
+//            break;
+//        }
+//                if (decoder.channels == 0) {
+//                    int channels = (header.mode() == Header.MODE_SINGLE_CHANNEL) ? 1 : 2;
+//                    float sampleRate = header.frequency();
+//                    int sampleSize = 16;
+//                    AudioFormat format = new AudioFormat(
+//                            AudioFormat.Encoding.PCM_SIGNED, sampleRate,
+//                            sampleSize, channels, channels * (sampleSize / 8),
+//                            sampleRate, true);
+//                    // big endian
+//                    SourceDataLine.Info info = new DataLine.Info(
+//                            SourceDataLine.class, format);
+//                    line = (SourceDataLine) AudioSystem.getLine(info);
+//                    if (BENCHMARK) {
+//                        decoder.initOutputBuffer(null, channels);
+//                    } else {
+//                        decoder.initOutputBuffer(line, channels);
+//                    }
+//                    // TODO sometimes the line can not be opened (maybe not enough system resources?): display error message
+//                    // System.out.println(line.getFormat().toString());
+//                    line.open(format);
+//                    line.start();
+//                }
+//                while (line.available() < 100) {
+//                    Thread.yield();
+//                    Thread.sleep(200);
+//                }
+//                decoder.decodeFrame(header, stream);
+
         return 0;
     }
 
@@ -158,6 +217,7 @@ public class Mp3Loader implements Loadable {
      */
     @Override
     public AudioFormat.Encoding getEncoding() {
+
         return null;
     }
 
@@ -166,6 +226,7 @@ public class Mp3Loader implements Loadable {
      */
     @Override
     public float getSampleRate() {
+
         return 0;
     }
 
@@ -174,6 +235,7 @@ public class Mp3Loader implements Loadable {
      */
     @Override
     public int getSampleSizeInBits() {
+
         return 0;
     }
 
@@ -182,6 +244,7 @@ public class Mp3Loader implements Loadable {
      */
     @Override
     public int getChannels() {
+
         return 0;
     }
 
@@ -190,6 +253,7 @@ public class Mp3Loader implements Loadable {
      */
     @Override
     public int getFrameSize() {
+
         return 0;
     }
 
@@ -198,6 +262,7 @@ public class Mp3Loader implements Loadable {
      */
     @Override
     public float getFrameRate() {
+
         return 0;
     }
 }

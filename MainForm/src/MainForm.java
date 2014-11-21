@@ -49,8 +49,21 @@ public class MainForm extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                core.open( "G:\\1.wav" );
+
                 core.playPause();
+            }
+        });
+        addButton.addMouseListener(new MouseAdapter() {
+            /**
+             * {@inheritDoc}
+             *
+             * @param e
+             */
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+
+                core.open( "G:\\2.wav" );
             }
         });
     }

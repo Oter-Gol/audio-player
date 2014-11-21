@@ -9,14 +9,14 @@ public interface Loadable {
      * sets current offset in file relative to the zero
      * byte in data section
      */
-    public void setCurrentOffset( int offset);
+    public void setCurrentPosition(int offset);
 
     /**
      * gets current offset in file relative to the zero
      * byte in data section
      * @return current offset in samples in file
      */
-    public int getCurrentOffset();
+    public int getCurrentPosition();
 
     /**
      * @return number of bytes in data chunk

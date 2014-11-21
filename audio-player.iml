@@ -9,9 +9,10 @@
       <sourceFolder url="file://$MODULE_DIR$/Interfaces/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Main/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/MainForm/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/MainForm/rc" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/rc" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/Core/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/XMLParser/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Mp3Loader/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

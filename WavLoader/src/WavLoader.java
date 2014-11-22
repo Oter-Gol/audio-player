@@ -13,21 +13,15 @@ public class WavLoader implements Loadable {
     private boolean valid; //if file is valid
 
     int bufferOffset = 0; // to read data from file. pointer from which position to start
-    /*
-     * constants
-     */
-    private final static String WAVE = "WAVE"; //constant WAVE, check if WAVE format
+
     /*
      * common variables
      */
-    private char [] ckIDFile = new char [ 4 ]; // Chunk ID: "RIFF" , 4 bytes
     private int cksizeFile; // Chunk size = size of file in bytes - sizeOf(RIFF and cksizeFile), 4 bytes
-    private char [] WAVEID = new char [ 4 ]; // WAVE ID: "WAVE", 4 bytes
 
     /*
      * fmt variables
      */
-    private char []  ckIDfmt = new char [ 4 ]; // Chunk ID: "fmt ", 4 bytes
     private int cksizefmt; //Chunk size: 16 or 18 or 40, 4 bytes
     private int wFormatTag; //Format code, need in enum 2 bytes
     private int nChannels; // Number of interleaved channels, 2 bytes
@@ -39,7 +33,6 @@ public class WavLoader implements Loadable {
     /*
      * common data variables for PCM, Non-PCM, Extensible
      */
-    private char [] ckIDData = new char [ 4 ]; //stores the word "data"
     private int cksizeData; // chunk size M*Nc*Ns
 
     /*
@@ -61,9 +54,13 @@ public class WavLoader implements Loadable {
      * data offset for all formats
      */
     private int dataOffset;
-    private int fmtOffset;
+//    private int fmtOffset;
 
     private AudioFormat.Encoding encoding;
+
+    public int getnAvjBytesPerSec() {
+        return nAvjBytesPerSec;
+    }
 
 
     /*
@@ -101,17 +98,13 @@ public class WavLoader implements Loadable {
         }
     }
 
-    private Format_Code wFormatTag_enum;
-    private double wavDurationInSeconds; // the duration of current wav file
-
-
     /*
      * methods
      */
 
     /**
      * constructor for wave loader
-     * @param filePath
+     * @param filePath path to the file
      */
     public WavLoader( String filePath ) {
         valid = true;
@@ -240,7 +233,7 @@ public class WavLoader implements Loadable {
         /*
          * choose Format Code according to wFormatTag
          */
-        wFormatTag_enum = Format_Code.fromInt( wFormatTag );
+        Format_Code wFormatTag_enum = Format_Code.fromInt(wFormatTag);
 
         /*
          * Number of interleaved channels
@@ -444,8 +437,8 @@ public class WavLoader implements Loadable {
 
     /**
      * reads certain number of sampled bytes in wavFile
-     * @param nBytes to read
-     * @param samplesBuff
+     * @param nBytes number of bytes to read
+     * @param samplesBuff filled with sampled bytes
      * @return array of bytes read from the file
      */
     @Override
@@ -524,7 +517,7 @@ public class WavLoader implements Loadable {
      */
     @Override
     public int getFrameSize() {
-        return 0;
+        return nBlockAlign;
     }
 
     /**
@@ -533,13 +526,6 @@ public class WavLoader implements Loadable {
     @Override
     public float getFrameRate() {
         return 0;
-    }
-
-    /**
-     * @return file specification string
-     */
-    public static String getFileIdentifier() {
-        return WAVE;
     }
 
     /**

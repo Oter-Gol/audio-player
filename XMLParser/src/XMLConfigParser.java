@@ -36,7 +36,9 @@ public class XMLConfigParser {
     /**
      * empty constructor
      */
-    public XMLConfigParser(){}
+    public XMLConfigParser(){
+        parseXmlFile();
+    }
 
     /**
      * constructor which set name and extensions
@@ -165,18 +167,18 @@ public class XMLConfigParser {
      * overrides method toString to print data about each format
      * @return string info about each format
      */
-    @Override
-    public String toString(){
-        StringBuilder s = new StringBuilder();
-        if (buffer_size == 0 ) {
-            s.append("format: " + name + ", extensions: ");
-            for (int i = 0; i < extension.length; i++) {
-                s.append(extension[i] + " ");
-            }
-        } else {
-            s.append("buffer_Size " + buffer_size);
-        }
-        return s.toString();
-    }
+//    @Override
+//    public String toString(){
+//        StringBuilder s = new StringBuilder();
+//        if (buffer_size == 0 ) {
+//            s.append("format: " + name + ", extensions: ");
+//            for (int i = 0; i < extension.length; i++) {
+//                s.append(extension[i] + " ");
+//            }
+//        } else {
+//            s.append("buffer_Size " + buffer_size);
+//        }
+//        return s.toString();
+//    }
 }
 

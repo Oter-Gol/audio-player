@@ -16,14 +16,27 @@ public class MainForm extends JFrame {
     private JList list1;
     private JButton addButton;
 
+    private boolean sliderCaptured = false;
+
     ImageIcon playIcon = new ImageIcon( "rc/play_32x32.png" );
     ImageIcon pauseIcon = new ImageIcon("rc/pause_32x32.png");
+
+    private class UpdateSlider implements SliderUpdater {
+
+        @Override
+        public void updateSlider(float value) {
+            if ( !sliderCaptured ){
+                slider1.setValue( (int)( value * slider1.getMaximum() ) );
+            }
+        }
+    }
 
 
 
 
     public MainForm() {
         super("Simple Java based player");
+
 
 
         setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
@@ -34,6 +47,9 @@ public class MainForm extends JFrame {
 
         DefaultListModel listModel = new DefaultListModel();
 
+
+
+
         list1.setModel( listModel );
         listModel.add( 0, "Hello" );
 
@@ -42,6 +58,9 @@ public class MainForm extends JFrame {
 
         final Core core = new Core();
 
+        UpdateSlider updateSlider = new UpdateSlider();
+        // Set callback
+        core.setCallBackSlider( updateSlider );
 
 
         playButton.addMouseListener(new MouseAdapter() {
@@ -74,7 +93,31 @@ public class MainForm extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
 
-                core.open( "G:\\1.wav" );
+                core.open( "/home/oleh/Music/1.wav" );
+            }
+        });
+        slider1.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                super.mousePressed(e);
+
+                sliderCaptured = true;
+
+
+
+            }
+        });
+        slider1.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+
+                sliderCaptured = false;
+
+                core.seekPlaying( (float)slider1.getValue() / slider1.getMaximum() );
+
+
+
             }
         });
     }

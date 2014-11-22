@@ -48,7 +48,6 @@ public class MainForm extends JFrame {
         setSize( 600, 600 );
 
         list1.setModel( listModel );
-        listModel.add( 0, "Hello" );
 
         setContentPane( panel1 );
 
@@ -69,14 +68,7 @@ public class MainForm extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
 
-                core.playPause();
-                if ( core.getPlayingState() == Core.PlayingStates.PLAY ) {
-                    playButton.setIcon( pauseIcon );
-                } else {
-                    if ( core.getPlayingState() == Core.PlayingStates.PAUSE ) {
-                        playButton.setIcon( playIcon );
-                    }
-                }
+
             }
         });
         addButton.addMouseListener(new MouseAdapter() {
@@ -89,7 +81,7 @@ public class MainForm extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
 
-                core.open( "G:/1.wav" );
+
             }
         });
         slider1.addMouseListener(new MouseAdapter() {
@@ -171,6 +163,47 @@ public class MainForm extends JFrame {
                     if ( index >= 0 ){
                         listModel.remove( index );
                         fileList.remove( index );
+                    }
+                }
+            }
+        });
+
+
+        list1.addMouseListener(new MouseAdapter() {
+            /**
+             * {@inheritDoc}
+             *
+             * @param e
+             */
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+
+                if (e.getClickCount() == 2) {
+                    int index = list1.locationToIndex(e.getPoint()); // Double click action with click point
+                    core.stop();
+                    core.open( fileList.get( index ));
+                    playButton.doClick( 100 );
+
+                }
+            }
+        });
+
+
+        playButton.addActionListener(new ActionListener() {
+            /**
+             * Invoked when an action occurs.
+             *
+             * @param e
+             */
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                core.playPause();
+                if ( core.getPlayingState() == Core.PlayingStates.PLAY ) {
+                    playButton.setIcon( pauseIcon );
+                } else {
+                    if ( core.getPlayingState() == Core.PlayingStates.PAUSE ) {
+                        playButton.setIcon( playIcon );
                     }
                 }
             }

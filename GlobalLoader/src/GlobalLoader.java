@@ -7,13 +7,11 @@ public class GlobalLoader implements Loadable {
 
     Loadable loadable;
 
-
-
     public int load( String filePath ) {
         XMLConfigParser pars = new XMLConfigParser();
         pars.parseDocument("Format");
 
-        String file = filePath.substring(filePath.lastIndexOf("/"));
+        String file = filePath.substring(filePath.lastIndexOf("\\"));
         String extension = file.substring(file.indexOf(".") + 1);
         String fileExtension = null;
 

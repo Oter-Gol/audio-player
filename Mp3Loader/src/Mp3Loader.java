@@ -65,14 +65,14 @@ public class Mp3Loader implements Loadable {
                 if (header == null) {
                     break;
                 }
-//                if (decoder.channels == 0) {
-//                    int channels = (header.mode() == Header.MODE_SINGLE_CHANNEL) ? 1 : 2;
-//                    float sampleRate = header.frequency();
-//                    int sampleSize = 16;
-//                    AudioFormat format = new AudioFormat(
-//                            AudioFormat.Encoding.PCM_SIGNED, sampleRate,
-//                            sampleSize, channels, channels * (sampleSize / 8),
-//                            sampleRate, true);
+                //if (decoder.channels == 0) {
+                    int channels = (header.mode() == Header.MODE_SINGLE_CHANNEL) ? 1 : 2;
+                    float sampleRate = header.frequency();
+                    int sampleSize = 16;
+                    audioFormat = new AudioFormat(
+                            AudioFormat.Encoding.PCM_SIGNED, sampleRate,
+                            sampleSize, channels, channels * (sampleSize / 8),
+                            sampleRate, true);
 //                    // big endian
 //                    SourceDataLine.Info info = new DataLine.Info(
 //                            SourceDataLine.class, format);
@@ -86,13 +86,14 @@ public class Mp3Loader implements Loadable {
 //                    // System.out.println(line.getFormat().toString());
 //                    line.open(format);
 //                    line.start();
-//                }
+                //}
 //                while (line.available() < 100) {
 //                    Thread.yield();
 //                    Thread.sleep(200);
 //                }
 //                decoder.decodeFrame(header, stream);
             } catch (Exception e) {
+                System.out.println( e.toString() );
                 if (error++ > 1000) {
                     break;
                 }
@@ -122,7 +123,6 @@ public class Mp3Loader implements Loadable {
     @Override
     public void setCurrentPosition(int position) {
         currentFramePosition = position;
-
     }
 
     /**

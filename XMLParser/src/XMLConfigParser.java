@@ -21,6 +21,18 @@ public class XMLConfigParser {
 
     Document dom;
 
+    public ArrayList<XMLConfigParser> getMyFormats() {
+        return myFormats;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String[] getExtension() {
+        return extension;
+    }
+
     /**
      * empty constructor
      */

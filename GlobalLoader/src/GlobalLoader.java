@@ -7,13 +7,10 @@ public class GlobalLoader implements Loadable {
 
     Loadable loadable;
 
-    private enum Formats {
 
-    }
 
     public int load( String filePath ) {
         XMLConfigParser pars = new XMLConfigParser();
-        pars.parseXmlFile();
         pars.parseDocument("Format");
 
         String file = filePath.substring(filePath.lastIndexOf("/"));
@@ -36,10 +33,10 @@ public class GlobalLoader implements Loadable {
 
         switch (c) {
             case 'W' :
-                loadable = new WavLoader(filePath);
+                loadable = new WavLoader( filePath );
                 break;
             case 'M' :
-                loadable = new Mp3Loader( filePath);
+                loadable = new Mp3Loader( filePath );
                 break;
         }
 

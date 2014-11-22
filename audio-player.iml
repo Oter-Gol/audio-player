@@ -14,6 +14,7 @@
       <sourceFolder url="file://$MODULE_DIR$/XMLParser/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Mp3Loader/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Logger/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/FileDrop/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

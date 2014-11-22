@@ -7,10 +7,41 @@ public class GlobalLoader implements Loadable {
 
     Loadable loadable;
 
-    public int load( String filePath ) {
+    private enum Formats {
 
-        String file = filePath.substring(filePath.lastIndexOf("\\"));
+    }
+
+    public int load( String filePath ) {
+        XMLConfigParser pars = new XMLConfigParser();
+        pars.parseXmlFile();
+        pars.parseDocument("Format");
+
+        String file = filePath.substring(filePath.lastIndexOf("/"));
         String extension = file.substring(file.indexOf(".") + 1);
+        String fileExtension = null;
+
+        for ( XMLConfigParser elems : pars.getMyFormats() ){
+            for ( int i = 0; i < elems.getExtension().length; i ++){
+                if ( extension.equalsIgnoreCase(elems.getExtension()[ i ] ) ){
+                    fileExtension = elems.getName();
+                    break;
+                }
+            }
+            if ( fileExtension != null) {
+                break;
+            }
+        }
+
+        char c = fileExtension.charAt(0);
+
+        switch (c) {
+            case 'W' :
+                loadable = new WavLoader(filePath);
+                break;
+            case 'M' :
+                loadable = new Mp3Loader( filePath);
+                break;
+        }
 
         // To-Do
 //        try {
@@ -23,7 +54,7 @@ public class GlobalLoader implements Loadable {
 
         /* Choosing file decoder */
         //if ( WavLoader.getFileIdentifier().compareToIgnoreCase( extension ) == 0 ) {
-            loadable = new WavLoader( filePath );
+            //loadable = new WavLoader( filePath );
         //}
 
         return 0;

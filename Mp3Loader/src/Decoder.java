@@ -24,7 +24,7 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.SourceDataLine;
 
 public class Decoder {
-    public static final int BUFFER_SIZE = 2 * 1152;
+    public static final int BUFFER_SIZE = 2 * 115200;
     public static final int MAX_CHANNELS = 2;
     private static final boolean BENCHMARK = false;
     
@@ -130,7 +130,16 @@ public class Decoder {
                     this);
         }
         l3decoder.decodeFrame();
+        // TODO Do not use
         writeBuffer();
+    }
+
+    public byte[] getBuffer(){
+        return buffer;
+    }
+
+    public int getBufferSize(){
+        return bufferPointer[0];
     }
 
     protected void initOutputBuffer(SourceDataLine line, int numberOfChannels) {
@@ -154,9 +163,10 @@ public class Decoder {
     }
 
     protected void writeBuffer() throws IOException {
-        if (line != null) {
-            line.write(buffer, 0, bufferPointer[0]);
-        }
+        // TODO
+//        if (line != null) {
+//            line.write(buffer, 0, bufferPointer[0]);
+//        }
         for (int i = 0; i < channels; i++) {
             bufferPointer[i] = i + i;
         }
@@ -199,6 +209,7 @@ public class Decoder {
                             AudioFormat.Encoding.PCM_SIGNED, sampleRate,
                             sampleSize, channels, channels * (sampleSize / 8),
                             sampleRate, true);
+                    System.out.println( format.toString() );
                     // big endian
                     SourceDataLine.Info info = new DataLine.Info(
                             SourceDataLine.class, format);

@@ -24,10 +24,12 @@ public class Mp3Loader implements Loadable {
     Decoder decoder;
     Bitstream stream;
 
+    InputStream in = null;
+
     public Mp3Loader( String filePath ){
 
 
-        InputStream in = null;
+        in = null;
         valid = true;
 
         try {
@@ -110,13 +112,6 @@ public class Mp3Loader implements Loadable {
         if (error > 0) {
             System.out.println("errors: " + error);
         }
-        //in.close();
-//        if (line != null) {
-//            line.stop();
-//            line.close();
-//            line = null;
-//        }
-
     }
     /**
      * sets current position in file relative to the zero
@@ -170,44 +165,44 @@ public class Mp3Loader implements Loadable {
     public int readSampledBytes(int nBytes, byte[] samplesBuff) {
 
         Header header = null;
+
+
         try {
             header = stream.readFrame();
-
-
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        if (header == null) {
-//            break;
-//        }
-//                if (decoder.channels == 0) {
-//                    int channels = (header.mode() == Header.MODE_SINGLE_CHANNEL) ? 1 : 2;
-//                    float sampleRate = header.frequency();
-//                    int sampleSize = 16;
-//                    AudioFormat format = new AudioFormat(
-//                            AudioFormat.Encoding.PCM_SIGNED, sampleRate,
-//                            sampleSize, channels, channels * (sampleSize / 8),
-//                            sampleRate, true);
-//                    // big endian
-//                    SourceDataLine.Info info = new DataLine.Info(
-//                            SourceDataLine.class, format);
-//                    line = (SourceDataLine) AudioSystem.getLine(info);
-//                    if (BENCHMARK) {
-//                        decoder.initOutputBuffer(null, channels);
-//                    } else {
-//                        decoder.initOutputBuffer(line, channels);
-//                    }
-//                    // TODO sometimes the line can not be opened (maybe not enough system resources?): display error message
-//                    // System.out.println(line.getFormat().toString());
-//                    line.open(format);
-//                    line.start();
-//                }
+        if (header == null) {
+            return 0;
+        }
+                if (decoder.channels == 0) {
+                    int channels = (header.mode() == Header.MODE_SINGLE_CHANNEL) ? 1 : 2;
+                    float sampleRate = header.frequency();
+                    int sampleSize = 16;
+                    audioFormat = new AudioFormat(
+                            AudioFormat.Encoding.PCM_SIGNED, sampleRate,
+                            sampleSize, channels, channels * (sampleSize / 8),
+                            sampleRate, true);
+                    // big endian
+                    SourceDataLine.Info info = new DataLine.Info(
+                            SourceDataLine.class, audioFormat);
+
+                        //decoder.initOutputBuffer(line, channels);
+                }
 //                while (line.available() < 100) {
 //                    Thread.yield();
 //                    Thread.sleep(200);
 //                }
-//                decoder.decodeFrame(header, stream);
+        try {
+            decoder.decodeFrame(header, stream);
+            samplesBuff = decoder.getBuffer();
+
+            return decoder.getBufferSize();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         return 0;
     }
@@ -218,7 +213,7 @@ public class Mp3Loader implements Loadable {
     @Override
     public AudioFormat.Encoding getEncoding() {
 
-        return null;
+        return audioFormat.getEncoding();
     }
 
     /**
@@ -227,7 +222,7 @@ public class Mp3Loader implements Loadable {
     @Override
     public float getSampleRate() {
 
-        return 0;
+        return audioFormat.getSampleRate();
     }
 
     /**
@@ -236,7 +231,7 @@ public class Mp3Loader implements Loadable {
     @Override
     public int getSampleSizeInBits() {
 
-        return 0;
+        return audioFormat.getSampleSizeInBits();
     }
 
     /**
@@ -245,7 +240,7 @@ public class Mp3Loader implements Loadable {
     @Override
     public int getChannels() {
 
-        return 0;
+        return audioFormat.getChannels();
     }
 
     /**
@@ -254,7 +249,7 @@ public class Mp3Loader implements Loadable {
     @Override
     public int getFrameSize() {
 
-        return 0;
+        return audioFormat.getFrameSize();
     }
 
     /**
@@ -263,6 +258,6 @@ public class Mp3Loader implements Loadable {
     @Override
     public float getFrameRate() {
 
-        return 0;
+        return audioFormat.getFrameRate();
     }
 }

@@ -215,17 +215,20 @@ public class Core {
      * @return
      */
     public int seekPlaying( float seekValue ) {
-        playingThread.pause();
-        System.out.println(seekValue);
-        int iSeek = (int)(seekValue * globalLoader.getDataLength());
-        iSeek = iSeek - ( iSeek % globalLoader.getFrameSize() );
-        System.out.println( globalLoader.getDataLength() );
-        System.out.println( iSeek % globalLoader.getDataLength() );
-        globalLoader.setCurrentPosition( iSeek );
+        if ( playingThread != null ){
+            playingThread.pause();
+            System.out.println(seekValue);
+            int iSeek = (int)(seekValue * globalLoader.getDataLength());
+            iSeek = iSeek - ( iSeek % globalLoader.getFrameSize() );
+            System.out.println( globalLoader.getDataLength() );
+            System.out.println( iSeek % globalLoader.getDataLength() );
+            globalLoader.setCurrentPosition( iSeek );
 
-        if ( playingState == PlayingStates.PLAY ) {
-            playingThread.resume();
+            if ( playingState == PlayingStates.PLAY ) {
+                playingThread.resume();
+            }
         }
+
 
         return 0;
     }

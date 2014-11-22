@@ -1,6 +1,9 @@
 import javax.swing.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
+import java.io.File;
+import java.security.Key;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 
 /**
@@ -16,10 +19,14 @@ public class MainForm extends JFrame {
     private JList list1;
     private JButton addButton;
 
+    ArrayList<String> fileList = new ArrayList<String>();
+
     private boolean sliderCaptured = false;
 
     ImageIcon playIcon = new ImageIcon( "rc/play_32x32.png" );
     ImageIcon pauseIcon = new ImageIcon("rc/pause_32x32.png");
+
+    DefaultListModel listModel = new DefaultListModel();
 
     private class UpdateSlider implements SliderUpdater {
 
@@ -31,13 +38,8 @@ public class MainForm extends JFrame {
         }
     }
 
-
-
-
     public MainForm() {
         super("Simple Java based player");
-
-
 
         setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
         pack();
@@ -45,14 +47,8 @@ public class MainForm extends JFrame {
         setVisible(true);
         setSize( 600, 600 );
 
-        DefaultListModel listModel = new DefaultListModel();
-
-
-
-
         list1.setModel( listModel );
         listModel.add( 0, "Hello" );
-
 
         setContentPane( panel1 );
 
@@ -93,7 +89,7 @@ public class MainForm extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
 
-                core.open( "/home/oleh/Music/1.wav" );
+                core.open( "G:/1.wav" );
             }
         });
         slider1.addMouseListener(new MouseAdapter() {
@@ -102,9 +98,6 @@ public class MainForm extends JFrame {
                 super.mousePressed(e);
 
                 sliderCaptured = true;
-
-
-
             }
         });
         slider1.addMouseListener(new MouseAdapter() {
@@ -113,11 +106,73 @@ public class MainForm extends JFrame {
                 super.mouseReleased(e);
 
                 sliderCaptured = false;
-
                 core.seekPlaying( (float)slider1.getValue() / slider1.getMaximum() );
 
+            }
+        });
+        slider1.addMouseListener(new MouseAdapter() {
+            /**
+             * {@inheritDoc}
+             *
+             * @param e
+             */
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                slider1.setValue( (int)( (float)e.getX() / slider1.getWidth() * slider1.getMaximum() )  );
+                core.seekPlaying( (float)slider1.getValue() / slider1.getMaximum() );
+            }
+        });
 
 
+        slider1.addMouseMotionListener(new MouseMotionAdapter() {
+            /**
+             * Invoked when a mouse button is pressed on a component and then
+             * dragged.  Mouse drag events will continue to be delivered to
+             * the component where the first originated until the mouse button is
+             * released (regardless of whether the mouse position is within the
+             * bounds of the component).
+             *
+             * @param e
+             */
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                super.mouseDragged(e);
+
+                if ( sliderCaptured ) {
+                    slider1.setValue( (int)( (float)e.getX() / slider1.getWidth() * slider1.getMaximum() )  );
+                }
+            }
+        });
+
+        new FileDrop( list1, new FileDrop.Listener()
+        {   public void  filesDropped( java.io.File[] files )
+            {
+                for ( File file : files ) {
+
+                    listModel.addElement(file.getName());
+                    fileList.add( file.getPath() );
+                }
+            }   // end filesDropped
+        }); // end FileDrop.Listener
+
+        list1.addKeyListener(new KeyAdapter() {
+            /**
+             * Invoked when a key has been released.
+             *
+             * @param e
+             */
+            @Override
+            public void keyReleased(KeyEvent e) {
+                super.keyReleased(e);
+
+                if ( e.getKeyCode() == KeyEvent.VK_DELETE ){
+                    int index = list1.getSelectedIndex();
+                    if ( index >= 0 ){
+                        listModel.remove( index );
+                        fileList.remove( index );
+                    }
+                }
             }
         });
     }

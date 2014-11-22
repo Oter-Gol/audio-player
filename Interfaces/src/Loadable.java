@@ -32,7 +32,7 @@ public interface Loadable {
     /**
      * reads certain number of bytes in wavFile
      * @param nBytes to read
-     * @param samplesBuff
+     * @param samplesBuff filled with sampled bytes
      * @return array of bytes read from the file
      */
     public int readSampledBytes(int nBytes, byte[] samplesBuff);

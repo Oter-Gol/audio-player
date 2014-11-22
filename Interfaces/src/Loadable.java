@@ -9,7 +9,7 @@ public interface Loadable {
      * sets current offset in file relative to the zero
      * byte in data section
      */
-    public void setCurrentPosition(int offset);
+    public void setCurrentPosition(int position);
 
     /**
      * gets current offset in file relative to the zero

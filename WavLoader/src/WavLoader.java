@@ -403,9 +403,9 @@ public class WavLoader implements Loadable {
      * byte in data section
      */
     @Override
-    public void setCurrentPosition(int offset) {
+    public void setCurrentPosition(int position) {
 
-        currentFileOffset = offset + dataOffset;
+        currentFileOffset = position + dataOffset;
 
         try {
             wavFile.seek(currentFileOffset);
